@@ -1,0 +1,32 @@
+.app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100svh;
+}
+
+.hero {
+    text-align: center;
+    padding: 0 24px;
+}
+
+.hero h1 {
+    font-size: 64px;
+    letter-spacing: -2px;
+    margin: 0 0 16px;
+
+    @media (max-width: 768px) {
+        font-size: 40px;
+    }
+}
+
+.byline {
+    font-size: 22px;
+    color: var(--text);
+    margin: 0;
+
+    @media (max-width: 768px) {
+        font-size: 18px;
+    }
+}
