@@ -55,13 +55,20 @@
     border: 1px solid var(--accent-border);
     border-radius: 4px;
     color: var(--accent);
+    cursor: pointer;
     display: inline-block;
+    font-family: var(--sans);
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.6px;
     margin-bottom: 10px;
     padding: 2px 7px;
     text-transform: uppercase;
+    transition: background 0.12s, opacity 0.12s;
+}
+
+.entry-modal__category:hover {
+    opacity: 0.75;
 }
 
 .entry-modal__title {
@@ -137,12 +144,21 @@
 
 .entry-modal__tag {
     background: var(--code-bg);
+    border: none;
     border-radius: 4px;
     color: var(--text);
+    cursor: pointer;
     font-family: var(--mono);
     font-size: 12px;
     opacity: 0.8;
     padding: 3px 8px;
+    transition: background 0.12s, color 0.12s, opacity 0.12s;
+}
+
+.entry-modal__tag:hover {
+    background: var(--accent-bg);
+    color: var(--accent);
+    opacity: 1;
 }
 
 .entry-modal__footer {
@@ -197,11 +213,10 @@
     text-align: center;
 }
 
+/* Related entries carousel */
+
 .entry-modal__related {
     border-top: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
     margin-top: 20px;
     padding-top: 16px;
 }
@@ -211,22 +226,76 @@
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: 10px;
     opacity: 0.5;
     text-transform: uppercase;
 }
 
-.entry-modal__related-item {
-    border-radius: 6px;
-    color: var(--text-h);
-    font-size: 13px;
-    line-height: 135%;
-    padding: 6px 10px;
-    text-decoration: none;
-    transition: background 0.12s, color 0.12s;
+.entry-modal__related-items {
+    display: flex;
+    gap: 10px;
+    margin: 0 -28px;
+    overflow-x: auto;
+    padding: 0 28px 8px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
 }
 
-.entry-modal__related-item:hover {
-    background: var(--accent-bg);
-    color: var(--accent);
+.entry-modal__related-items::-webkit-scrollbar {
+    display: none;
+}
+
+.entry-modal__related-card {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 7px;
+    padding: 12px;
+    scroll-snap-align: start;
+    text-align: left;
+    transition: border-color 0.12s, transform 0.12s;
+    width: 176px;
+}
+
+.entry-modal__related-card:hover {
+    border-color: var(--accent-border);
+    transform: translateY(-1px);
+}
+
+.entry-modal__related-card-source {
+    align-items: center;
+    display: flex;
+    gap: 5px;
+}
+
+.entry-modal__related-card-domain {
+    color: var(--text);
+    font-size: 11px;
+    opacity: 0.55;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.entry-modal__related-card-time {
+    color: var(--text);
+    font-size: 11px;
+    margin-left: auto;
+    opacity: 0.45;
+    white-space: nowrap;
+}
+
+.entry-modal__related-card-title {
+    color: var(--text-h);
+    display: -webkit-box;
+    font-size: 12px;
+    line-height: 138%;
+    margin: 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
 }

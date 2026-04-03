@@ -1,6 +1,6 @@
 export const seedEntries = [
     {
-        id: '1',
+        id: 'introduction-to-model-context-protocol-mcp',
         url: 'https://modelcontextprotocol.io/introduction',
         title: 'Introduction to Model Context Protocol (MCP)',
         category: 'Technology',
@@ -17,7 +17,7 @@ export const seedEntries = [
         reading_time: 8,
     },
     {
-        id: '2',
+        id: 'ux-principles-for-ai-powered-interfaces',
         url: 'https://www.nngroup.com/articles/ai-ux-principles/',
         title: 'UX Principles for AI-Powered Interfaces',
         category: 'Design Studio',
@@ -34,7 +34,7 @@ export const seedEntries = [
         reading_time: 12,
     },
     {
-        id: '3',
+        id: 'openai-prompt-engineering-guide',
         url: 'https://platform.openai.com/docs/guides/prompt-engineering',
         title: 'OpenAI Prompt Engineering Guide',
         category: 'Digital Solutioning',
@@ -51,7 +51,7 @@ export const seedEntries = [
         reading_time: 15,
     },
     {
-        id: '4',
+        id: 'building-ai-products-what-pms-need-to-know',
         url: 'https://review.firstround.com/building-ai-products-what-product-managers-need-to-know/',
         title: 'Building AI Products: What PMs Need to Know',
         category: 'Product Management & Partnerships',
@@ -68,7 +68,7 @@ export const seedEntries = [
         reading_time: 10,
     },
     {
-        id: '5',
+        id: 'building-effective-agents',
         url: 'https://www.anthropic.com/research/building-effective-agents',
         title: 'Building Effective Agents',
         category: 'Technology',
@@ -85,7 +85,7 @@ export const seedEntries = [
         reading_time: 20,
     },
     {
-        id: '6',
+        id: 'deconstructing-rag',
         url: 'https://blog.langchain.dev/deconstructing-rag/',
         title: 'Deconstructing RAG',
         category: 'Technology',
@@ -102,7 +102,7 @@ export const seedEntries = [
         reading_time: 18,
     },
     {
-        id: '7',
+        id: 'demoing-ai-to-enterprise-clients-what-actually-works',
         url: 'https://www.salesforce.com/blog/ai-enterprise-demos/',
         title: 'Demoing AI to Enterprise Clients: What Actually Works',
         category: 'Client Solutions',
@@ -119,7 +119,7 @@ export const seedEntries = [
         reading_time: 6,
     },
     {
-        id: '8',
+        id: 'ethical-guidelines-for-ai-generated-imagery',
         url: 'https://www.creativebloq.com/ai/ai-art/ai-generated-imagery-ethics-guidelines',
         title: 'Ethical Guidelines for AI-Generated Imagery in Client Work',
         category: 'Design Studio',
@@ -136,7 +136,7 @@ export const seedEntries = [
         reading_time: 9,
     },
     {
-        id: '9',
+        id: 'using-ai-to-improve-project-estimation-accuracy',
         url: 'https://www.pmi.org/learning/library/ai-project-estimation-accuracy',
         title: 'Using AI to Improve Project Estimation Accuracy',
         category: 'Project Management',
@@ -153,7 +153,7 @@ export const seedEntries = [
         reading_time: 11,
     },
     {
-        id: '10',
+        id: 'ai-powered-research-for-account-planning',
         url: 'https://hbr.org/2024/03/how-to-use-ai-for-better-account-planning',
         title: 'AI-Powered Research for Account Planning',
         category: 'Client Development',

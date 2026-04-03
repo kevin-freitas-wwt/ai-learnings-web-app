@@ -11,6 +11,7 @@ function EntryFeed() {
     const [searchParams] = useSearchParams()
     const search = searchParams.get( 'search' ) || ''
     const category = searchParams.get( 'category' ) || ''
+    const tag = searchParams.get( 'tag' ) || ''
     const sort = searchParams.get( 'sort' ) || 'newest'
 
     const [lastVisit] = useState( () => localStorage.getItem( 'aih_last_visit' ) )
@@ -19,7 +20,7 @@ function EntryFeed() {
         localStorage.setItem( 'aih_last_visit', new Date().toISOString() )
     }, [] )
 
-    const filtered = filterEntries( seedEntries, { search, category } )
+    const filtered = filterEntries( seedEntries, { search, category, tag } )
     const sorted = sortEntries( filtered, sort )
 
     const { focusedIndex } = useKeyboardNav( sorted )

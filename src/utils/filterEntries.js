@@ -1,6 +1,7 @@
-export function filterEntries( entries, { search, category } ) {
+export function filterEntries( entries, { search, category, tag } ) {
     return entries.filter( ( entry ) => {
         if ( category && entry.category !== category ) return false
+        if ( tag && !entry.tags.includes( tag ) ) return false
 
         if ( search ) {
             const q = search.toLowerCase()

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { seedEntries } from '../../data/seedEntries.js'
 import { relativeTime } from '../../utils/relativeTime.js'
 import './EntryModal.css'
@@ -68,7 +68,7 @@ function EntryModal() {
     const related = seedEntries
         .filter( ( e ) => e.id !== entry.id && e.category === entry.category )
         .sort( ( a, b ) => b.heart_count - a.heart_count )
-        .slice( 0, 3 )
+        .slice( 0, 5 )
 
     return (
         <div className="entry-modal__backdrop" onClick={close}>
@@ -82,7 +82,13 @@ function EntryModal() {
                 <button className="entry-modal__close" onClick={close} aria-label="Close">✕</button>
 
                 <div className="entry-modal__header">
-                    <span className="entry-modal__category">{entry.category}</span>
+                    <button
+                        className="entry-modal__category"
+                        onClick={() => navigate( `/?category=${encodeURIComponent( entry.category )}` )}
+                        title={`Filter by ${entry.category}`}
+                    >
+                        {entry.category}
+                    </button>
                     <h2 className="entry-modal__title" id="entry-modal-title">{entry.title}</h2>
                     <a
                         href={entry.url}
@@ -111,7 +117,14 @@ function EntryModal() {
                 {entry.tags.length > 0 && (
                     <div className="entry-modal__tags">
                         {entry.tags.map( ( tag ) => (
-                            <span key={tag} className="entry-modal__tag">#{tag}</span>
+                            <button
+                                key={tag}
+                                className="entry-modal__tag"
+                                onClick={() => navigate( `/?tag=${encodeURIComponent( tag )}` )}
+                                title={`Filter by #${tag}`}
+                            >
+                                #{tag}
+                            </button>
                         ) )}
                     </div>
                 )}
@@ -142,15 +155,30 @@ function EntryModal() {
                 {related.length > 0 && (
                     <div className="entry-modal__related">
                         <p className="entry-modal__related-label">More in {entry.category}</p>
-                        {related.map( ( rel ) => (
-                            <Link
-                                key={rel.id}
-                                to={`/entry/${rel.id}`}
-                                className="entry-modal__related-item"
-                            >
-                                {rel.title}
-                            </Link>
-                        ) )}
+                        <div className="entry-modal__related-items">
+                            {related.map( ( rel ) => {
+                                const relHostname = new URL( rel.url ).hostname.replace( 'www.', '' )
+                                const relFavicon = `https://www.google.com/s2/favicons?domain=${relHostname}&sz=32`
+                                return (
+                                    <button
+                                        key={rel.id}
+                                        className="entry-modal__related-card"
+                                        onClick={() => navigate( `/entry/${rel.id}` )}
+                                    >
+                                        <div className="entry-modal__related-card-source">
+                                            <img src={relFavicon} alt="" width="12" height="12" />
+                                            <span className="entry-modal__related-card-domain">{relHostname}</span>
+                                            {rel.reading_time && (
+                                                <span className="entry-modal__related-card-time">
+                                                    {rel.reading_time} min
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="entry-modal__related-card-title">{rel.title}</p>
+                                    </button>
+                                )
+                            } )}
+                        </div>
                     </div>
                 )}
             </div>

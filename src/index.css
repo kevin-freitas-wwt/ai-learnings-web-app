@@ -11,8 +11,8 @@
     --shadow:
         rgba(74, 44, 23, 0.08) 0 10px 15px -3px, rgba(74, 44, 23, 0.04) 0 4px 6px -2px;
     --social-bg: rgba(240, 232, 220, 0.5);
-    --text: #5c4a3a;
-    --text-h: #4a2c17;
+    --text: #3c2a1a;
+    --text-h: #2a0c00;
 
     -moz-osx-font-smoothing: grayscale;
     -webkit-font-smoothing: antialiased;
@@ -40,7 +40,7 @@
         --shadow:
             rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
         --social-bg: rgba(61, 50, 40, 0.5);
-        --text: #c4b49a;
+        --text: #e4d4ba;
         --text-h: #f8e5c8;
     }
 }
