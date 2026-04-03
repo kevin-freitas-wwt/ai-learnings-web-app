@@ -23,7 +23,7 @@ function SiteHeader() {
     return (
         <header className="site-header">
             <Link to="/" className="site-header__logo">
-                AI Learnings Hub
+                <h1>AI Learnings Hub</h1>
             </Link>
             <nav className="site-header__nav">
                 {hasHearts && (
