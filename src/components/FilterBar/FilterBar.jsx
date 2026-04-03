@@ -6,6 +6,7 @@ function FilterBar() {
     const [searchParams, setSearchParams] = useSearchParams()
     const search = searchParams.get( 'search' ) || ''
     const category = searchParams.get( 'category' ) || ''
+    const tag = searchParams.get( 'tag' ) || ''
     const sort = searchParams.get( 'sort' ) || 'newest'
 
     function setParam( key, value ) {
@@ -43,6 +44,18 @@ function FilterBar() {
                     <option value="most-faved">Most Fav&apos;d</option>
                 </select>
             </div>
+            {tag && (
+                <div className="filter-bar__active-tag">
+                    <span className="filter-bar__active-tag-label">Tag: #{tag}</span>
+                    <button
+                        className="filter-bar__active-tag-remove"
+                        onClick={() => setParam( 'tag', '' )}
+                        aria-label="Remove tag filter"
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
             <div className="filter-bar__categories" role="group" aria-label="Filter by category">
                 <button
                     className={`filter-bar__cat${!category ? ' filter-bar__cat--active' : ''}`}
