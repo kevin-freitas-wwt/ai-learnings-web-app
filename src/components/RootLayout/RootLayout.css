@@ -1,0 +1,8 @@
+.root-layout__main {
+    flex: 1;
+    padding: 24px;
+
+    @media (max-width: 1024px) {
+        padding: 16px;
+    }
+}

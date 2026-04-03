@@ -1,107 +1,109 @@
 :root {
-  --text: #5c4a3a;
-  --text-h: #4a2c17;
-  --bg: #faf6f0;
-  --border: #e0d5c7;
-  --code-bg: #f0e8dc;
-  --accent: #7a4b2a;
-  --accent-bg: rgba(122, 75, 42, 0.1);
-  --accent-border: rgba(122, 75, 42, 0.4);
-  --social-bg: rgba(240, 232, 220, 0.5);
-  --shadow:
-    rgba(74, 44, 23, 0.08) 0 10px 15px -3px, rgba(74, 44, 23, 0.04) 0 4px 6px -2px;
+    --accent: #7a4b2a;
+    --accent-bg: rgba(122, 75, 42, 0.1);
+    --accent-border: rgba(122, 75, 42, 0.4);
+    --bg: #faf6f0;
+    --border: #e0d5c7;
+    --code-bg: #f0e8dc;
+    --heading: 'Georgia', 'Times New Roman', 'Palatino Linotype', serif;
+    --mono: ui-monospace, Consolas, monospace;
+    --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+    --shadow:
+        rgba(74, 44, 23, 0.08) 0 10px 15px -3px, rgba(74, 44, 23, 0.04) 0 4px 6px -2px;
+    --social-bg: rgba(240, 232, 220, 0.5);
+    --text: #5c4a3a;
+    --text-h: #4a2c17;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: 'Georgia', 'Times New Roman', 'Palatino Linotype', serif;
-  --mono: ui-monospace, Consolas, monospace;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    background: var(--bg);
+    color: var(--text);
+    color-scheme: light dark;
+    font: 18px/145% var(--sans);
+    font-synthesis: none;
+    letter-spacing: 0.18px;
+    text-rendering: optimizeLegibility;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+    @media (max-width: 1024px) {
+        font-size: 16px;
+    }
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --text: #c4b49a;
-    --text-h: #e8d5b8;
-    --bg: #2a2118;
-    --border: #3d3228;
-    --code-bg: #332a20;
-    --accent: #c9956a;
-    --accent-bg: rgba(201, 149, 106, 0.15);
-    --accent-border: rgba(201, 149, 106, 0.5);
-    --social-bg: rgba(61, 50, 40, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+    :root {
+        --accent: #c9956a;
+        --accent-bg: rgba(201, 149, 106, 0.15);
+        --accent-border: rgba(201, 149, 106, 0.5);
+        --bg: #2a2118;
+        --border: #3d3228;
+        --code-bg: #332a20;
+        --shadow:
+            rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+        --social-bg: rgba(61, 50, 40, 0.5);
+        --text: #c4b49a;
+        --text-h: #f8e5c8;
+    }
 }
 
 body {
-  margin: 0;
+    margin: 0;
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+    border-inline: 1px solid var(--border);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    max-width: 100%;
+    min-height: 100svh;
+    width: 1126px;
 }
 
 h1,
 h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+    color: var(--text-h);
+    font-family: var(--heading);
+    font-weight: 500;
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+    font-size: 56px;
+    letter-spacing: -1.68px;
+    margin: 32px 0;
+
+    @media (max-width: 1024px) {
+        font-size: 36px;
+        margin: 20px 0;
+    }
 }
+
 h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+    font-size: 24px;
+    letter-spacing: -0.24px;
+    line-height: 118%;
+    margin: 0 0 8px;
+
+    @media (max-width: 1024px) {
+        font-size: 20px;
+    }
 }
+
 p {
-  margin: 0;
+    margin: 0;
 }
 
 code,
 .counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+    border-radius: 4px;
+    color: var(--text-h);
+    display: inline-flex;
+    font-family: var(--mono);
 }
 
 code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+    background: var(--code-bg);
+    font-size: 15px;
+    line-height: 135%;
+    padding: 4px 8px;
 }

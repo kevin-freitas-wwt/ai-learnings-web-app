@@ -1,0 +1,124 @@
+.entry-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    display: block;
+    padding: 16px;
+    text-decoration: none;
+    transition: border-color 0.15s, transform 0.15s;
+}
+
+.entry-card:hover,
+.entry-card--focused {
+    border-color: var(--accent-border);
+    transform: translateY(-1px);
+}
+
+.entry-card--focused {
+    box-shadow: 0 0 0 2px var(--accent-border), var(--shadow);
+    outline: none;
+}
+
+.entry-card__meta {
+    margin-bottom: 8px;
+}
+
+.entry-card__category {
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-border);
+    border-radius: 4px;
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    padding: 2px 7px;
+    text-transform: uppercase;
+}
+
+.entry-card__title {
+    color: var(--text-h);
+    font-family: var(--heading);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+    line-height: 135%;
+    margin: 0 0 10px;
+}
+
+.entry-card__summary {
+    color: var(--text);
+    font-size: 13px;
+    line-height: 148%;
+    list-style: none;
+    margin: 0 0 12px;
+    padding: 0;
+}
+
+.entry-card__summary li {
+    margin-bottom: 5px;
+    padding-left: 14px;
+    position: relative;
+}
+
+.entry-card__summary li::before {
+    color: var(--accent);
+    content: '·';
+    left: 4px;
+    position: absolute;
+}
+
+.entry-card__footer {
+    align-items: center;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    padding-top: 10px;
+}
+
+.entry-card__source {
+    align-items: center;
+    display: flex;
+    gap: 5px;
+    min-width: 0;
+}
+
+.entry-card__favicon {
+    border-radius: 2px;
+    display: block;
+    flex-shrink: 0;
+    height: 14px;
+    width: 14px;
+}
+
+.entry-card__domain {
+    color: var(--text);
+    font-size: 11px;
+    opacity: 0.6;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.entry-card__details {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+    gap: 6px;
+    margin-left: 8px;
+}
+
+.entry-card__reading-time,
+.entry-card__time {
+    color: var(--text);
+    font-size: 11px;
+    opacity: 0.55;
+    white-space: nowrap;
+}
+
+.entry-card__reading-time::after {
+    content: '·';
+    margin-left: 6px;
+    opacity: 0.6;
+}
