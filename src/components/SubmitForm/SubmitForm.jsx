@@ -15,7 +15,7 @@ function SubmitForm() {
     const [bullets, setBullets] = useState( ['', '', ''] )
     const [tags, setTags] = useState( [] )
     const [tagInput, setTagInput] = useState( '' )
-    const [submitterName, setSubmitterName] = useState( '' )
+    const [submitterName, setSubmitterName] = useState( () => localStorage.getItem( 'aih_submitter_name' ) || '' )
     const [readingTime, setReadingTime] = useState( '' )
     const [fetchingTitle, setFetchingTitle] = useState( false )
     const [duplicateEntry, setDuplicateEntry] = useState( null )
@@ -100,6 +100,10 @@ function SubmitForm() {
 
         const trimmedBullets = bullets.filter( ( b ) => b.trim() )
         if ( !trimmedBullets.length ) return
+
+        if ( submitterName.trim() ) {
+            localStorage.setItem( 'aih_submitter_name', submitterName.trim() )
+        }
 
         // Phase 2: save to Supabase instead of logging
         console.log( 'Submitted entry:', {
