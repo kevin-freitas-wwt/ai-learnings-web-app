@@ -4,6 +4,13 @@
     padding: 40px 0 60px;
 }
 
+.submit-page__header {
+    align-items: flex-start;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 32px;
+}
+
 .submit-page__title {
     font-size: 32px;
     letter-spacing: -0.8px;
@@ -13,6 +20,25 @@
 .submit-page__description {
     color: var(--text);
     font-size: 15px;
-    margin-bottom: 32px;
+    margin-bottom: 0;
     opacity: 0.65;
+}
+
+.submit-page__close {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 14px;
+    line-height: 1;
+    margin-top: 6px;
+    padding: 6px 10px;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.submit-page__close:hover {
+    border-color: var(--accent-border);
+    color: var(--accent);
 }

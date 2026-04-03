@@ -1,7 +1,8 @@
-export function filterEntries( entries, { search, category, tag } ) {
+export function filterEntries( entries, { search, category, tag, submitter } ) {
     return entries.filter( ( entry ) => {
         if ( category && entry.category !== category ) return false
         if ( tag && !entry.tags.includes( tag ) ) return false
+        if ( submitter && entry.submitter_name !== submitter ) return false
 
         if ( search ) {
             const q = search.toLowerCase()

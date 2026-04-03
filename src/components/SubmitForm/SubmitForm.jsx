@@ -6,14 +6,19 @@ import { useEntries } from '../../context/useEntries.js'
 import { slugify } from '../../utils/slugify.js'
 import './SubmitForm.css'
 
-function SubmitForm() {
+function SubmitForm( { back = '/', initialCategory = '' } ) {
     const navigate = useNavigate()
     const { entries, refetch } = useEntries()
     const nameInputRef = useRef( null )
 
+    const allNames = [...new Set( [
+        ...TEAM,
+        ...entries.map( ( e ) => e.submitter_name ).filter( Boolean ),
+    ] )].sort()
+
     const [url, setUrl] = useState( '' )
     const [title, setTitle] = useState( '' )
-    const [category, setCategory] = useState( '' )
+    const [category, setCategory] = useState( initialCategory )
     const [bullets, setBullets] = useState( ['', '', ''] )
     const [tags, setTags] = useState( [] )
     const [tagInput, setTagInput] = useState( '' )
@@ -78,7 +83,7 @@ function SubmitForm() {
         setSubmitterName( value )
         if ( value.length >= 1 ) {
             const q = value.toLowerCase()
-            const matches = TEAM.filter( ( name ) =>
+            const matches = allNames.filter( ( name ) =>
                 name.toLowerCase().startsWith( q ) ||
                 name.toLowerCase().includes( ` ${q}` )
             ).slice( 0, 6 )
@@ -135,7 +140,7 @@ function SubmitForm() {
 
         await refetch()
 
-        navigate( '/' )
+        navigate( back )
     }
 
     const validBullets = bullets.filter( ( b ) => b.trim() ).length > 0
@@ -307,7 +312,7 @@ function SubmitForm() {
             </div>
 
             <div className="submit-form__actions">
-                <button type="button" className="submit-form__cancel" onClick={() => navigate( '/' )}>
+                <button type="button" className="submit-form__cancel" onClick={() => navigate( back )}>
                     Cancel
                 </button>
                 <button type="submit" className="submit-form__submit" disabled={!isValid}>

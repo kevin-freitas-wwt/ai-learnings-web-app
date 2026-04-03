@@ -180,8 +180,20 @@
 }
 
 .entry-modal__submitter {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
     font-weight: 500;
     opacity: 1;
+    padding: 0;
+    transition: color 0.12s;
+}
+
+.entry-modal__submitter:hover {
+    color: var(--accent);
 }
 
 .entry-modal__heart {

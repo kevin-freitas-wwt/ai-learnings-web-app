@@ -144,9 +144,13 @@ function EntryModal() {
                 <div className="entry-modal__footer">
                     <div className="entry-modal__meta">
                         {entry.submitter_name && (
-                            <span className="entry-modal__submitter">
+                            <button
+                                className="entry-modal__submitter"
+                                onClick={() => navigate( `/?submitter=${encodeURIComponent( entry.submitter_name )}` )}
+                                title={`See all posts by ${entry.submitter_name}`}
+                            >
                                 Shared by {entry.submitter_name}
-                            </span>
+                            </button>
                         )}
                         <span className="entry-modal__time">{relativeTime( entry.created_at )}</span>
                         {entry.reading_time && (
