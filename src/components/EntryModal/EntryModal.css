@@ -347,6 +347,82 @@
     color: var(--accent);
 }
 
+.entry-modal__footer-actions {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+}
+
+.entry-modal__delete-trigger {
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 12px;
+    opacity: 0.3;
+    padding: 0;
+    transition: opacity 0.12s;
+}
+
+.entry-modal__delete-trigger:hover {
+    opacity: 0.7;
+}
+
+.entry-modal__delete-confirm {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+}
+
+.entry-modal__delete-confirm-label {
+    color: var(--text);
+    font-size: 12px;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.entry-modal__delete-yes {
+    background: none;
+    border: 1px solid var(--accent-border);
+    border-radius: 6px;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 10px;
+    transition: background 0.12s;
+    white-space: nowrap;
+}
+
+.entry-modal__delete-yes:hover:not(:disabled) {
+    background: var(--accent-bg);
+}
+
+.entry-modal__delete-yes:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.entry-modal__delete-no {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 10px;
+    transition: border-color 0.12s;
+}
+
+.entry-modal__delete-no:hover:not(:disabled) {
+    border-color: var(--accent-border);
+}
+
+.entry-modal__delete-no:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 .entry-modal__heart {
     background: none;
     border: 1px solid var(--border);

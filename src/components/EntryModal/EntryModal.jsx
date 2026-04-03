@@ -22,6 +22,29 @@ function EntryModal() {
     const [saving, setSaving] = useState( false )
     const [saveError, setSaveError] = useState( '' )
 
+    const [confirmDelete, setConfirmDelete] = useState( false )
+    const [deleting, setDeleting] = useState( false )
+
+    async function handleDelete() {
+        setDeleting( true )
+        try {
+            const res = await fetch( `/api/entries/${id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify( { submitter_name: myName } ),
+            } )
+            if ( res.ok ) {
+                await refetch()
+                navigate( '/' )
+            }
+        } catch {
+            // ignore — button resets below
+        } finally {
+            setDeleting( false )
+            setConfirmDelete( false )
+        }
+    }
+
     function startEdit() {
         setEditBullets( [...entry.summary] )
         setSaveError( '' )
@@ -269,13 +292,43 @@ function EntryModal() {
                             </span>
                         )}
                     </div>
-                    <button
-                        className={`entry-modal__heart${hearted ? ' entry-modal__heart--active' : ''}`}
-                        onClick={handleHeart}
-                        aria-label={hearted ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                        {hearted ? '♥' : '♡'} {heartCount}
-                    </button>
+                    <div className="entry-modal__footer-actions">
+                        {isOwner && (
+                            confirmDelete ? (
+                                <div className="entry-modal__delete-confirm">
+                                    <span className="entry-modal__delete-confirm-label">Remove this entry?</span>
+                                    <button
+                                        className="entry-modal__delete-yes"
+                                        onClick={handleDelete}
+                                        disabled={deleting}
+                                    >
+                                        {deleting ? 'Removing…' : 'Yes, remove'}
+                                    </button>
+                                    <button
+                                        className="entry-modal__delete-no"
+                                        onClick={() => setConfirmDelete( false )}
+                                        disabled={deleting}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    className="entry-modal__delete-trigger"
+                                    onClick={() => setConfirmDelete( true )}
+                                >
+                                    Remove
+                                </button>
+                            )
+                        )}
+                        <button
+                            className={`entry-modal__heart${hearted ? ' entry-modal__heart--active' : ''}`}
+                            onClick={handleHeart}
+                            aria-label={hearted ? 'Remove from favorites' : 'Add to favorites'}
+                        >
+                            {hearted ? '♥' : '♡'} {heartCount}
+                        </button>
+                    </div>
                 </div>
 
                 {related.length > 0 && (
