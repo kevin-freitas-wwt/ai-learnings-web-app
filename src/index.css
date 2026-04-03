@@ -16,7 +16,7 @@
 
     -moz-osx-font-smoothing: grayscale;
     -webkit-font-smoothing: antialiased;
-    background: var(--bg);
+    background: #111;
     color: var(--text);
     color-scheme: light dark;
     font: 18px/145% var(--sans);
@@ -50,6 +50,7 @@ body {
 }
 
 #root {
+    background-color: var(--bg);
     border-inline: 1px solid var(--border);
     box-sizing: border-box;
     display: flex;

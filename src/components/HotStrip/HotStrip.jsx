@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
-import { seedEntries } from '../../data/seedEntries.js'
+import { useEntries } from '../../context/useEntries.js'
 import './HotStrip.css'
 
 function HotStrip() {
-    const hot = [...seedEntries]
+    const { entries } = useEntries()
+    const hot = [...entries]
         .sort( ( a, b ) => ( b.click_count + b.heart_count ) - ( a.click_count + a.heart_count ) )
         .slice( 0, 4 )
 

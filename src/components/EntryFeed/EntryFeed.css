@@ -1,6 +1,7 @@
 .entry-feed {
     column-count: 3;
     column-gap: 16px;
+    padding: 14px 0;
 }
 
 .entry-feed__item {

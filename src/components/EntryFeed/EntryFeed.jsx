@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useKeyboardNav } from '../../hooks/useKeyboardNav.js'
-import { seedEntries } from '../../data/seedEntries.js'
+import { useEntries } from '../../context/useEntries.js'
 import { filterEntries } from '../../utils/filterEntries.js'
 import { sortEntries } from '../../utils/sortEntries.js'
 import EntryCard from '../EntryCard/EntryCard.jsx'
 import './EntryFeed.css'
 
 function EntryFeed() {
+    const { entries, loading } = useEntries()
     const [searchParams] = useSearchParams()
     const search = searchParams.get( 'search' ) || ''
     const category = searchParams.get( 'category' ) || ''
@@ -20,7 +21,7 @@ function EntryFeed() {
         localStorage.setItem( 'aih_last_visit', new Date().toISOString() )
     }, [] )
 
-    const filtered = filterEntries( seedEntries, { search, category, tag } )
+    const filtered = filterEntries( entries, { search, category, tag } )
     const sorted = sortEntries( filtered, sort )
 
     const { focusedIndex } = useKeyboardNav( sorted )
@@ -37,6 +38,10 @@ function EntryFeed() {
     }
 
     const showDivider = newEntries.length > 0 && oldEntries.length > 0
+
+    if ( loading ) {
+        return <p className="entry-feed__empty">Loading…</p>
+    }
 
     if ( sorted.length === 0 ) {
         return (

@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { seedEntries } from '../../data/seedEntries.js'
+import { useEntries } from '../../context/useEntries.js'
 import { relativeTime } from '../../utils/relativeTime.js'
 import './EntryModal.css'
 
 function EntryModal() {
     const { id } = useParams()
     const navigate = useNavigate()
-    const entry = seedEntries.find( ( e ) => e.id === id )
+    const { entries, refetch } = useEntries()
+    const entry = entries.find( ( e ) => e.id === id )
 
     const storedHearts = JSON.parse( localStorage.getItem( 'aih_hearts' ) || '[]' )
     const [hearted, setHearted] = useState( () => storedHearts.includes( id ) )
@@ -17,8 +18,9 @@ function EntryModal() {
         navigate( '/' )
     }, [navigate] )
 
-    const handleHeart = useCallback( () => {
+    const handleHeart = useCallback( async () => {
         const stored = JSON.parse( localStorage.getItem( 'aih_hearts' ) || '[]' )
+        const delta = hearted ? -1 : 1
         if ( hearted ) {
             localStorage.setItem( 'aih_hearts', JSON.stringify( stored.filter( ( hid ) => hid !== id ) ) )
             setHearted( false )
@@ -28,7 +30,17 @@ function EntryModal() {
             setHearted( true )
             setHeartCount( ( c ) => c + 1 )
         }
-    }, [hearted, id] )
+        fetch( `/api/entries/${id}/heart`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify( { delta } ),
+        } ).then( () => refetch() ).catch( () => {} )
+    }, [hearted, id, refetch] )
+
+    useEffect( () => {
+        if ( !entry ) return
+        fetch( `/api/entries/${id}/click`, { method: 'POST' } ).catch( () => {} )
+    }, [entry, id] )
 
     useEffect( () => {
         document.body.style.overflow = 'hidden'
@@ -65,7 +77,7 @@ function EntryModal() {
     const hostname = new URL( entry.url ).hostname.replace( 'www.', '' )
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
 
-    const related = seedEntries
+    const related = entries
         .filter( ( e ) => e.id !== entry.id && e.category === entry.category )
         .sort( ( a, b ) => b.heart_count - a.heart_count )
         .slice( 0, 5 )

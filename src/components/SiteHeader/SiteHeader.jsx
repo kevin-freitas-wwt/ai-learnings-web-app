@@ -1,23 +1,25 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { seedEntries } from '../../data/seedEntries.js'
+import { useEntries } from '../../context/useEntries.js'
 import { exportHearts } from '../../utils/exportHearts.js'
 import './SiteHeader.css'
 
 function SiteHeader() {
     const navigate = useNavigate()
+    const { entries } = useEntries()
     const [hasHearts] = useState( () => {
         const ids = JSON.parse( localStorage.getItem( 'aih_hearts' ) || '[]' )
         return ids.length > 0
     } )
 
     function handleRandom() {
-        const random = seedEntries[ Math.floor( Math.random() * seedEntries.length ) ]
+        if ( !entries.length ) return
+        const random = entries[ Math.floor( Math.random() * entries.length ) ]
         navigate( `/entry/${random.id}` )
     }
 
     function handleExport() {
-        exportHearts( seedEntries )
+        exportHearts( entries )
     }
 
     return (

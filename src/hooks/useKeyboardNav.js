@@ -20,13 +20,11 @@ export function useKeyboardNav( entries ) {
         if ( tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ) return
 
         switch ( e.key ) {
-            case 'j':
-            case 'J':
+            case 'ArrowRight':
                 e.preventDefault()
                 setFocusedIndex( ( i ) => Math.min( i + 1, entriesRef.current.length - 1 ) )
                 break
-            case 'k':
-            case 'K':
+            case 'ArrowLeft':
                 e.preventDefault()
                 setFocusedIndex( ( i ) => Math.max( i - 1, 0 ) )
                 break

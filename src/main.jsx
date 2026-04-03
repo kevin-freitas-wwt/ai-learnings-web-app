@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import './index.css'
+import { EntriesProvider } from './context/EntriesContext.jsx'
 import RootLayout from './components/RootLayout/RootLayout.jsx'
 import EntryModal from './components/EntryModal/EntryModal.jsx'
 import FeedPage from './pages/FeedPage.jsx'
@@ -35,6 +36,8 @@ const router = createBrowserRouter( [
 
 createRoot( document.getElementById( 'root' ) ).render(
     <StrictMode>
-        <RouterProvider router={router} />
+        <EntriesProvider>
+            <RouterProvider router={router} />
+        </EntriesProvider>
     </StrictMode>,
 )

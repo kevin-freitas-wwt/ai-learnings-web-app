@@ -1,12 +1,14 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CATEGORIES } from '../../data/categories.js'
-import { seedEntries } from '../../data/seedEntries.js'
 import { TEAM } from '../../data/team.js'
+import { useEntries } from '../../context/useEntries.js'
+import { slugify } from '../../utils/slugify.js'
 import './SubmitForm.css'
 
 function SubmitForm() {
     const navigate = useNavigate()
+    const { entries, refetch } = useEntries()
     const nameInputRef = useRef( null )
 
     const [url, setUrl] = useState( '' )
@@ -26,7 +28,7 @@ function SubmitForm() {
         const trimmed = url.trim()
         if ( !trimmed ) return
 
-        const existing = seedEntries.find( ( e ) => e.url.toLowerCase() === trimmed.toLowerCase() )
+        const existing = entries.find( ( e ) => e.url.toLowerCase() === trimmed.toLowerCase() )
         setDuplicateEntry( existing || null )
 
         if ( !title.trim() ) {
@@ -94,7 +96,7 @@ function SubmitForm() {
         setNameMatches( [] )
     }
 
-    function handleSubmit( e ) {
+    async function handleSubmit( e ) {
         e.preventDefault()
         if ( duplicateEntry ) return
 
@@ -105,9 +107,8 @@ function SubmitForm() {
             localStorage.setItem( 'aih_submitter_name', submitterName.trim() )
         }
 
-        // Phase 2: save to Supabase instead of logging
-        console.log( 'Submitted entry:', {
-            id: String( Date.now() ),
+        const newEntry = {
+            id: slugify( title.trim() ),
             url: url.trim(),
             title: title.trim(),
             category,
@@ -118,7 +119,21 @@ function SubmitForm() {
             created_at: new Date().toISOString(),
             submitter_name: submitterName.trim() || null,
             reading_time: readingTime ? Number( readingTime ) : null,
+        }
+
+        const res = await fetch( '/api/entries', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify( newEntry ),
         } )
+
+        if ( !res.ok ) {
+            const { error } = await res.json().catch( () => ( {} ) )
+            console.error( 'Failed to save entry:', error ?? res.status )
+            return
+        }
+
+        await refetch()
 
         navigate( '/' )
     }
