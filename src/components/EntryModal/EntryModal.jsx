@@ -14,6 +14,65 @@ function EntryModal() {
     const [hearted, setHearted] = useState( () => storedHearts.includes( id ) )
     const [heartCount, setHeartCount] = useState( entry ? entry.heart_count : 0 )
 
+    const myName = localStorage.getItem( 'aih_submitter_name' ) || ''
+    const isOwner = !!myName && !!entry?.submitter_name && myName === entry.submitter_name
+
+    const [editing, setEditing] = useState( false )
+    const [editBullets, setEditBullets] = useState( [] )
+    const [saving, setSaving] = useState( false )
+    const [saveError, setSaveError] = useState( '' )
+
+    function startEdit() {
+        setEditBullets( [...entry.summary] )
+        setSaveError( '' )
+        setEditing( true )
+    }
+
+    function cancelEdit() {
+        setEditing( false )
+        setSaveError( '' )
+    }
+
+    function handleEditBulletChange( i, value ) {
+        const next = [...editBullets]
+        next[i] = value
+        setEditBullets( next )
+    }
+
+    function addEditBullet() {
+        setEditBullets( [...editBullets, ''] )
+    }
+
+    function removeEditBullet( i ) {
+        if ( editBullets.length <= 1 ) return
+        setEditBullets( editBullets.filter( ( _, idx ) => idx !== i ) )
+    }
+
+    async function saveBullets() {
+        const trimmed = editBullets.filter( ( b ) => b.trim() )
+        if ( !trimmed.length ) return
+        setSaving( true )
+        setSaveError( '' )
+        try {
+            const res = await fetch( `/api/entries/${id}/summary`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify( { summary: trimmed, submitter_name: myName } ),
+            } )
+            if ( !res.ok ) {
+                const { error } = await res.json().catch( () => ( {} ) )
+                setSaveError( error || 'Save failed' )
+                return
+            }
+            await refetch()
+            setEditing( false )
+        } catch {
+            setSaveError( 'Save failed' )
+        } finally {
+            setSaving( false )
+        }
+    }
+
     const close = useCallback( () => {
         navigate( '/' )
     }, [navigate] )
@@ -120,11 +179,62 @@ function EntryModal() {
                     </a>
                 </div>
 
-                <ul className="entry-modal__summary">
-                    {entry.summary.map( ( bullet, i ) => (
-                        <li key={i}>{bullet}</li>
-                    ) )}
-                </ul>
+                {editing ? (
+                    <div className="entry-modal__edit-summary">
+                        <div className="entry-modal__edit-bullets">
+                            {editBullets.map( ( bullet, i ) => (
+                                <div key={i} className="entry-modal__edit-bullet-row">
+                                    <span className="entry-modal__edit-bullet-dot">·</span>
+                                    <input
+                                        type="text"
+                                        className="entry-modal__edit-bullet-input"
+                                        value={bullet}
+                                        onChange={( e ) => handleEditBulletChange( i, e.target.value )}
+                                        placeholder={`Learning ${i + 1}…`}
+                                    />
+                                    {editBullets.length > 1 && (
+                                        <button
+                                            type="button"
+                                            className="entry-modal__edit-bullet-remove"
+                                            onClick={() => removeEditBullet( i )}
+                                            aria-label="Remove bullet"
+                                        >×</button>
+                                    )}
+                                </div>
+                            ) )}
+                        </div>
+                        <button type="button" className="entry-modal__edit-add" onClick={addEditBullet}>
+                            + Add bullet
+                        </button>
+                        {saveError && <p className="entry-modal__edit-error">{saveError}</p>}
+                        <div className="entry-modal__edit-actions">
+                            <button type="button" className="entry-modal__edit-cancel" onClick={cancelEdit}>
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="entry-modal__edit-save"
+                                onClick={saveBullets}
+                                disabled={saving || !editBullets.filter( ( b ) => b.trim() ).length}
+                            >
+                                {saving ? 'Saving…' : 'Save'}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="entry-modal__summary-wrap">
+                        <ul className="entry-modal__summary">
+                            {entry.summary.map( ( bullet, i ) => (
+                                <li key={i}>{bullet}</li>
+                            ) )}
+                        </ul>
+                        {isOwner && (
+                            <button className="entry-modal__edit-trigger" onClick={startEdit}>
+                                Edit learnings
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 {entry.tags.length > 0 && (
                     <div className="entry-modal__tags">
