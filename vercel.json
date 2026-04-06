@@ -1,3 +1,13 @@
 {
-    "framework": "vite"
+    "framework": "vite",
+    "crons": [
+        {
+            "path": "/api/slack/daily-summary",
+            "schedule": "0 14 * * *"
+        },
+        {
+            "path": "/api/slack/weekly-summary",
+            "schedule": "0 20 * * 5"
+        }
+    ]
 }
