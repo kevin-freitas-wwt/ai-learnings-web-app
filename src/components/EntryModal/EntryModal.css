@@ -423,6 +423,23 @@
     opacity: 0.5;
 }
 
+.entry-modal__share {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 5px 9px;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.entry-modal__share:hover {
+    border-color: var(--accent-border);
+    color: var(--accent);
+}
+
 .entry-modal__heart {
     background: none;
     border: 1px solid var(--border);

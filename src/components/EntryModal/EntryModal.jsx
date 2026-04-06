@@ -7,7 +7,7 @@ import './EntryModal.css'
 function EntryModal() {
     const { id } = useParams()
     const navigate = useNavigate()
-    const { entries, refetch } = useEntries()
+    const { entries, loading, refetch } = useEntries()
     const entry = entries.find( ( e ) => e.id === id )
 
     const storedHearts = JSON.parse( localStorage.getItem( 'aih_hearts' ) || '[]' )
@@ -24,6 +24,14 @@ function EntryModal() {
 
     const [confirmDelete, setConfirmDelete] = useState( false )
     const [deleting, setDeleting] = useState( false )
+    const [copied, setCopied] = useState( false )
+
+    function handleShare() {
+        navigator.clipboard.writeText( window.location.href ).then( () => {
+            setCopied( true )
+            setTimeout( () => setCopied( false ), 2000 )
+        } ).catch( () => {} )
+    }
 
     async function handleDelete() {
         setDeleting( true )
@@ -139,6 +147,8 @@ function EntryModal() {
         document.addEventListener( 'keydown', handleKeyDown )
         return () => document.removeEventListener( 'keydown', handleKeyDown )
     }, [close, handleHeart] )
+
+    if ( loading ) return null
 
     if ( !entry ) {
         return (
@@ -321,6 +331,20 @@ function EntryModal() {
                                 </button>
                             )
                         )}
+                        <button
+                            className="entry-modal__share"
+                            onClick={handleShare}
+                            aria-label="Copy link to clipboard"
+                            title="Copy link"
+                        >
+                            {copied ? '✓' : (
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <path d="M7 1 L7 8" />
+                                    <path d="M4.5 3.5 L7 1 L9.5 3.5" />
+                                    <path d="M3 6 L2 6 C1.45 6 1 6.45 1 7 L1 12 C1 12.55 1.45 13 2 13 L12 13 C12.55 13 13 12.55 13 12 L13 7 C13 6.45 12.55 6 12 6 L11 6" />
+                                </svg>
+                            )}
+                        </button>
                         <button
                             className={`entry-modal__heart${hearted ? ' entry-modal__heart--active' : ''}`}
                             onClick={handleHeart}
