@@ -94,5 +94,18 @@ export default async function handler( req, res ) {
         .filter( Boolean )
         .slice( 0, 5 )
 
+    // If the model returned a refusal/failure instead of bullets, surface it
+    const FAILURE_PHRASES = [
+        "i'm sorry", "i cannot", "i can't", "unable to", "could not", "couldn't",
+        "not able to", "failed to", "no content", "cannot access", "can't access",
+        "error", "unfortunately", "i don't have",
+    ]
+    const isFailure = bullets.length === 0 ||
+        ( bullets.length === 1 && FAILURE_PHRASES.some( ( p ) => bullets[0].toLowerCase().includes( p ) ) )
+
+    if ( isFailure ) {
+        return res.status( 422 ).json( { error: "Couldn't extract learnings from that URL. The page may be paywalled or bot-protected — please fill them in manually." } )
+    }
+
     return res.status( 200 ).json( { bullets } )
 }

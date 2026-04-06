@@ -21,6 +21,7 @@ function SubmitForm( { back = '/', initialCategory = '' } ) {
     const [category, setCategory] = useState( initialCategory )
     const [bullets, setBullets] = useState( ['', '', ''] )
     const [generatingBullets, setGeneratingBullets] = useState( false )
+    const [generateError, setGenerateError] = useState( '' )
     const [tags, setTags] = useState( [] )
     const [tagInput, setTagInput] = useState( '' )
     const [submitterName, setSubmitterName] = useState( () => localStorage.getItem( 'aih_submitter_name' ) || '' )
@@ -56,18 +57,21 @@ function SubmitForm( { back = '/', initialCategory = '' } ) {
     async function handleGenerateBullets() {
         if ( !url.trim() || generatingBullets ) return
         setGeneratingBullets( true )
+        setGenerateError( '' )
         try {
             const res = await fetch( '/api/generate-bullets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify( { url: url.trim() } ),
             } )
-            if ( res.ok ) {
-                const { bullets: generated } = await res.json()
-                if ( generated?.length ) setBullets( generated )
+            const data = await res.json()
+            if ( res.ok && data.bullets?.length ) {
+                setBullets( data.bullets )
+            } else {
+                setGenerateError( data.error || 'Could not generate learnings. Please fill them in manually.' )
             }
         } catch {
-            // silently skip — user can fill in manually
+            setGenerateError( 'Could not reach the AI. Please fill them in manually.' )
         } finally {
             setGeneratingBullets( false )
         }
@@ -238,6 +242,9 @@ function SubmitForm( { back = '/', initialCategory = '' } ) {
                         {generatingBullets ? 'Generating…' : '✦ Generate with AI'}
                     </button>
                 </div>
+                {generateError && (
+                    <p className="submit-form__generate-error">{generateError}</p>
+                )}
                 <div className="submit-form__bullets">
                     {bullets.map( ( bullet, i ) => (
                         <div key={i} className="submit-form__bullet-row">

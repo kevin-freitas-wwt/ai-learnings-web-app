@@ -125,6 +125,13 @@
     opacity: 0.35;
 }
 
+.submit-form__generate-error {
+    color: var(--accent);
+    font-size: 12px;
+    margin: 0;
+    opacity: 0.8;
+}
+
 /* Bullets */
 
 .submit-form__bullets {
