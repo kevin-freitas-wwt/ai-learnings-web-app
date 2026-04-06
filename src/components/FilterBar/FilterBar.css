@@ -56,11 +56,66 @@
     border-color: var(--accent-border);
 }
 
-.filter-bar__bottom {
-    align-items: center;
+.filter-bar__tags {
     display: flex;
-    gap: 10px;
-    justify-content: space-between;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.filter-bar__tags::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-bar__tag {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 3px 10px;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    white-space: nowrap;
+}
+
+.filter-bar__tag:hover {
+    border-color: var(--accent-border);
+    color: var(--accent);
+}
+
+.filter-bar__tag--active {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.filter-bar__tag-clear {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 11px;
+    opacity: 0.55;
+    padding: 3px 10px;
+    transition: opacity 0.12s, border-color 0.12s;
+    white-space: nowrap;
+}
+
+.filter-bar__tag-clear:hover {
+    border-color: var(--accent-border);
+    opacity: 1;
+}
+
+.filter-bar__tag-x {
+    font-size: 14px;
+    line-height: 1;
+    margin-left: 4px;
+    opacity: 0.7;
 }
 
 .filter-bar__categories {
@@ -72,7 +127,7 @@
 .filter-bar__person-wrap {
     flex-shrink: 0;
     position: relative;
-    width: 33%;
+    width: 200px;
 }
 
 .filter-bar__person-autocomplete {
@@ -83,11 +138,12 @@
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 7px;
+    box-sizing: border-box;
     color: var(--text);
     font-family: var(--sans);
-    font-size: 12px;
+    font-size: 14px;
     outline: none;
-    padding: 4px 10px;
+    padding: 7px 12px;
     transition: border-color 0.15s;
     width: 100%;
 }
@@ -145,10 +201,11 @@
     box-sizing: border-box;
     color: var(--accent);
     display: flex;
-    font-size: 12px;
+    font-family: var(--sans);
+    font-size: 14px;
     gap: 6px;
     justify-content: space-between;
-    padding: 4px 6px 4px 10px;
+    padding: 7px 8px 7px 12px;
     width: 100%;
 }
 
@@ -194,6 +251,12 @@
     border-color: var(--accent-border);
     color: var(--accent);
     font-weight: 500;
+}
+
+.filter-bar__overflow-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 .filter-bar__active-tag {

@@ -170,7 +170,7 @@ function EntryModal() {
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
 
     const related = entries
-        .filter( ( e ) => e.id !== entry.id && e.category === entry.category )
+        .filter( ( e ) => e.id !== entry.id && e.tags.some( ( t ) => entry.tags.includes( t ) ) )
         .sort( ( a, b ) => b.heart_count - a.heart_count )
         .slice( 0, 5 )
 
@@ -186,13 +186,6 @@ function EntryModal() {
                 <button className="entry-modal__close" onClick={close} aria-label="Close">✕</button>
 
                 <div className="entry-modal__header">
-                    <button
-                        className="entry-modal__category"
-                        onClick={() => navigate( `/?category=${encodeURIComponent( entry.category )}` )}
-                        title={`Filter by ${entry.category}`}
-                    >
-                        {entry.category}
-                    </button>
                     <h2 className="entry-modal__title" id="entry-modal-title">{entry.title}</h2>
                     <a
                         href={entry.url}
@@ -275,7 +268,7 @@ function EntryModal() {
                             <button
                                 key={tag}
                                 className="entry-modal__tag"
-                                onClick={() => navigate( `/?tag=${encodeURIComponent( tag )}` )}
+                                onClick={() => navigate( `/?tags=${encodeURIComponent( tag )}` )}
                                 title={`Filter by #${tag}`}
                             >
                                 #{tag}
@@ -357,7 +350,7 @@ function EntryModal() {
 
                 {related.length > 0 && (
                     <div className="entry-modal__related">
-                        <p className="entry-modal__related-label">More in {entry.category}</p>
+                        <p className="entry-modal__related-label">Related</p>
                         <div className="entry-modal__related-items">
                             {related.map( ( rel ) => {
                                 const relHostname = new URL( rel.url ).hostname.replace( 'www.', '' )

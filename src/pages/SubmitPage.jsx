@@ -6,7 +6,6 @@ function SubmitPage() {
     const { state } = useLocation()
     const navigate = useNavigate()
     const back = `/${state?.back || ''}`
-    const initialCategory = new URLSearchParams( state?.back || '' ).get( 'category' ) || ''
 
     return (
         <div className="submit-page">
@@ -23,7 +22,7 @@ function SubmitPage() {
                     aria-label="Close"
                 >✕</button>
             </div>
-            <SubmitForm back={back} initialCategory={initialCategory} />
+            <SubmitForm back={back} />
         </div>
     )
 }

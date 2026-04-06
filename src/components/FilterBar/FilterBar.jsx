@@ -1,14 +1,12 @@
 import { useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CATEGORIES } from '../../data/categories.js'
 import { useEntries } from '../../context/useEntries.js'
 import './FilterBar.css'
 
 function FilterBar() {
     const [searchParams, setSearchParams] = useSearchParams()
     const search = searchParams.get( 'search' ) || ''
-    const category = searchParams.get( 'category' ) || ''
-    const tag = searchParams.get( 'tag' ) || ''
+    const tags = ( searchParams.get( 'tags' ) || '' ).split( ',' ).filter( Boolean )
     const sort = searchParams.get( 'sort' ) || 'newest'
     const submitter = searchParams.get( 'submitter' ) || ''
 
@@ -16,6 +14,16 @@ function FilterBar() {
     const people = [...new Set(
         entries.map( ( e ) => e.submitter_name ).filter( Boolean )
     )].sort()
+
+    const topTags = Object.entries(
+        entries.flatMap( ( e ) => e.tags ).reduce( ( acc, t ) => {
+            acc[t] = ( acc[t] || 0 ) + 1
+            return acc
+        }, {} )
+    )
+        .sort( ( a, b ) => b[1] - a[1] )
+        .slice( 0, 15 )
+        .map( ( [t] ) => t )
 
     const [personInput, setPersonInput] = useState( '' )
     const [personMatches, setPersonMatches] = useState( [] )
@@ -32,8 +40,17 @@ function FilterBar() {
         setSearchParams( next, { replace: true } )
     }
 
-    function handleCategoryClick( cat ) {
-        setParam( 'category', category === cat ? '' : cat )
+    function toggleTag( t ) {
+        const next = new URLSearchParams( searchParams )
+        const updated = tags.includes( t )
+            ? tags.filter( ( x ) => x !== t )
+            : [...tags, t]
+        if ( updated.length > 0 ) {
+            next.set( 'tags', updated.join( ',' ) )
+        } else {
+            next.delete( 'tags' )
+        }
+        setSearchParams( next, { replace: true } )
     }
 
     function handlePersonFocus() {
@@ -77,47 +94,6 @@ function FilterBar() {
                     value={search}
                     onChange={( e ) => setParam( 'search', e.target.value )}
                 />
-                <select
-                    className="filter-bar__sort"
-                    value={sort}
-                    onChange={( e ) => setParam( 'sort', e.target.value )}
-                    aria-label="Sort order"
-                >
-                    <option value="newest">Newest</option>
-                    <option value="most-clicked">Most Clicked</option>
-                    <option value="most-faved">Most Fav&apos;d</option>
-                </select>
-            </div>
-            {tag && (
-                <div className="filter-bar__active-tag">
-                    <span className="filter-bar__active-tag-label">Tag: #{tag}</span>
-                    <button
-                        className="filter-bar__active-tag-remove"
-                        onClick={() => setParam( 'tag', '' )}
-                        aria-label="Remove tag filter"
-                    >
-                        ×
-                    </button>
-                </div>
-            )}
-            <div className="filter-bar__bottom">
-                <div className="filter-bar__categories" role="group" aria-label="Filter by category">
-                    <button
-                        className={`filter-bar__cat${!category ? ' filter-bar__cat--active' : ''}`}
-                        onClick={() => setParam( 'category', '' )}
-                    >
-                        All
-                    </button>
-                    {CATEGORIES.map( ( cat ) => (
-                        <button
-                            key={cat}
-                            className={`filter-bar__cat${category === cat ? ' filter-bar__cat--active' : ''}`}
-                            onClick={() => handleCategoryClick( cat )}
-                        >
-                            {cat}
-                        </button>
-                    ) )}
-                </div>
                 {people.length > 0 && (
                     <div className="filter-bar__person-wrap">
                         {submitter ? (
@@ -161,7 +137,54 @@ function FilterBar() {
                         )}
                     </div>
                 )}
+                <select
+                    className="filter-bar__sort"
+                    value={sort}
+                    onChange={( e ) => setParam( 'sort', e.target.value )}
+                    aria-label="Sort order"
+                >
+                    <option value="newest">Newest</option>
+                    <option value="most-clicked">Most Clicked</option>
+                    <option value="most-faved">Most Fav&apos;d</option>
+                </select>
             </div>
+            {topTags.length > 0 && (
+                <div className="filter-bar__tags" role="group" aria-label="Filter by tag">
+                    {tags.length > 0 && (
+                        <button
+                            className="filter-bar__tag-clear"
+                            onClick={() => setParam( 'tags', '' )}
+                        >
+                            clear all
+                        </button>
+                    )}
+                    {topTags.map( ( t ) => (
+                        <button
+                            key={t}
+                            className={`filter-bar__tag${tags.includes( t ) ? ' filter-bar__tag--active' : ''}`}
+                            onClick={() => toggleTag( t )}
+                        >
+                            #{t}{tags.includes( t ) && <span className="filter-bar__tag-x">×</span>}
+                        </button>
+                    ) )}
+                </div>
+            )}
+            {tags.filter( ( t ) => !topTags.includes( t ) ).length > 0 && (
+                <div className="filter-bar__overflow-tags">
+                    {tags.filter( ( t ) => !topTags.includes( t ) ).map( ( t ) => (
+                        <div key={t} className="filter-bar__active-tag">
+                            <span className="filter-bar__active-tag-label">#{t}</span>
+                            <button
+                                className="filter-bar__active-tag-remove"
+                                onClick={() => toggleTag( t )}
+                                aria-label={`Remove tag ${t}`}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    ) )}
+                </div>
+            )}
         </div>
     )
 }

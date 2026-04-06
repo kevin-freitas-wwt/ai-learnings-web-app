@@ -11,8 +11,7 @@ function EntryFeed() {
     const { entries, loading } = useEntries()
     const [searchParams] = useSearchParams()
     const search = searchParams.get( 'search' ) || ''
-    const category = searchParams.get( 'category' ) || ''
-    const tag = searchParams.get( 'tag' ) || ''
+    const tags = ( searchParams.get( 'tags' ) || '' ).split( ',' ).filter( Boolean )
     const sort = searchParams.get( 'sort' ) || 'newest'
     const submitter = searchParams.get( 'submitter' ) || ''
 
@@ -22,7 +21,7 @@ function EntryFeed() {
         localStorage.setItem( 'aih_last_visit', new Date().toISOString() )
     }, [] )
 
-    const filtered = filterEntries( entries, { search, category, tag, submitter } )
+    const filtered = filterEntries( entries, { search, tags, submitter } )
     const sorted = sortEntries( filtered, sort )
 
     const { focusedIndex } = useKeyboardNav( sorted )

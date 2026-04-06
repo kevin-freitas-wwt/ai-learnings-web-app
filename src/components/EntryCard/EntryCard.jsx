@@ -4,7 +4,7 @@ import { relativeTime } from '../../utils/relativeTime.js'
 import './EntryCard.css'
 
 function EntryCard( { entry, focused } ) {
-    const { id, url, title, category, summary, created_at, reading_time } = entry
+    const { id, url, title, summary, created_at, reading_time } = entry
     const hostname = new URL( url ).hostname.replace( 'www.', '' )
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
     const cardRef = useRef( null )
@@ -21,9 +21,6 @@ function EntryCard( { entry, focused } ) {
             to={`/entry/${id}`}
             className={`entry-card${focused ? ' entry-card--focused' : ''}`}
         >
-            <div className="entry-card__meta">
-                <span className="entry-card__category">{category}</span>
-            </div>
             <h2 className="entry-card__title">{title}</h2>
             <ul className="entry-card__summary">
                 {summary.slice( 0, 2 ).map( ( bullet, i ) => (

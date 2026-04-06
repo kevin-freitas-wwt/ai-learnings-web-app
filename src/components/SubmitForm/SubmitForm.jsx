@@ -1,12 +1,11 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CATEGORIES } from '../../data/categories.js'
 import { TEAM } from '../../data/team.js'
 import { useEntries } from '../../context/useEntries.js'
 import { slugify } from '../../utils/slugify.js'
 import './SubmitForm.css'
 
-function SubmitForm( { back = '/', initialCategory = '' } ) {
+function SubmitForm( { back = '/' } ) {
     const navigate = useNavigate()
     const { entries, refetch } = useEntries()
     const nameInputRef = useRef( null )
@@ -18,7 +17,6 @@ function SubmitForm( { back = '/', initialCategory = '' } ) {
 
     const [url, setUrl] = useState( '' )
     const [title, setTitle] = useState( '' )
-    const [category, setCategory] = useState( initialCategory )
     const [bullets, setBullets] = useState( ['', '', ''] )
     const [generatingBullets, setGeneratingBullets] = useState( false )
     const [generateError, setGenerateError] = useState( '' )
@@ -141,7 +139,6 @@ function SubmitForm( { back = '/', initialCategory = '' } ) {
             id: slugify( title.trim() ),
             url: url.trim(),
             title: title.trim(),
-            category,
             summary: trimmedBullets,
             tags,
             click_count: 0,
@@ -169,7 +166,7 @@ function SubmitForm( { back = '/', initialCategory = '' } ) {
     }
 
     const validBullets = bullets.filter( ( b ) => b.trim() ).length > 0
-    const isValid = url.trim() && title.trim() && category && validBullets && !duplicateEntry
+    const isValid = url.trim() && title.trim() && validBullets && !duplicateEntry
 
     return (
         <form className="submit-form" onSubmit={handleSubmit} noValidate>
@@ -210,22 +207,6 @@ function SubmitForm( { back = '/', initialCategory = '' } ) {
                     onChange={( e ) => setTitle( e.target.value )}
                     required
                 />
-            </div>
-
-            <div className="submit-form__field">
-                <label className="submit-form__label" htmlFor="sf-category">Category</label>
-                <select
-                    id="sf-category"
-                    className="submit-form__select"
-                    value={category}
-                    onChange={( e ) => setCategory( e.target.value )}
-                    required
-                >
-                    <option value="">Select a category…</option>
-                    {CATEGORIES.map( ( cat ) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                    ) )}
-                </select>
             </div>
 
             <div className="submit-form__field">

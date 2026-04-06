@@ -1,7 +1,6 @@
-export function filterEntries( entries, { search, category, tag, submitter } ) {
+export function filterEntries( entries, { search, tags, submitter } ) {
     return entries.filter( ( entry ) => {
-        if ( category && entry.category !== category ) return false
-        if ( tag && !entry.tags.includes( tag ) ) return false
+        if ( tags.length > 0 && !tags.every( ( t ) => entry.tags.includes( t ) ) ) return false
         if ( submitter && entry.submitter_name !== submitter ) return false
 
         if ( search ) {

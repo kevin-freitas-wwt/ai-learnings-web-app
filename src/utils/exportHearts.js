@@ -7,7 +7,7 @@ export function exportHearts( entries ) {
     const lines = hearted.map( ( e ) => {
         const bullets = e.summary.map( ( b ) => `  - ${b}` ).join( '\n' )
         const tags = e.tags.map( ( t ) => `#${t}` ).join( ' ' )
-        const meta = [e.category, tags].filter( Boolean ).join( ' · ' )
+        const meta = tags
         return `## ${e.title}\n> ${e.url}\n\n_${meta}_\n\n${bullets}`
     } )
 
