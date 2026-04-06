@@ -15,9 +15,6 @@ function HotStrip() {
                 {hot.map( ( entry ) => (
                     <Link key={entry.id} to={`/entry/${entry.id}`} className="hot-strip__item">
                         <span className="hot-strip__title">{entry.title}</span>
-                        <span className="hot-strip__stats">
-                            {entry.heart_count}♥ &middot; {entry.click_count} clicks
-                        </span>
                     </Link>
                 ) )}
             </div>
