@@ -20,6 +20,7 @@ function SubmitForm( { back = '/', initialCategory = '' } ) {
     const [title, setTitle] = useState( '' )
     const [category, setCategory] = useState( initialCategory )
     const [bullets, setBullets] = useState( ['', '', ''] )
+    const [generatingBullets, setGeneratingBullets] = useState( false )
     const [tags, setTags] = useState( [] )
     const [tagInput, setTagInput] = useState( '' )
     const [submitterName, setSubmitterName] = useState( () => localStorage.getItem( 'aih_submitter_name' ) || '' )
@@ -49,6 +50,26 @@ function SubmitForm( { back = '/', initialCategory = '' } ) {
             } finally {
                 setFetchingTitle( false )
             }
+        }
+    }
+
+    async function handleGenerateBullets() {
+        if ( !url.trim() || generatingBullets ) return
+        setGeneratingBullets( true )
+        try {
+            const res = await fetch( '/api/generate-bullets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify( { url: url.trim() } ),
+            } )
+            if ( res.ok ) {
+                const { bullets: generated } = await res.json()
+                if ( generated?.length ) setBullets( generated )
+            }
+        } catch {
+            // silently skip — user can fill in manually
+        } finally {
+            setGeneratingBullets( false )
         }
     }
 
@@ -205,7 +226,18 @@ function SubmitForm( { back = '/', initialCategory = '' } ) {
 
             <div className="submit-form__field">
                 <label className="submit-form__label">Key Learnings</label>
-                <p className="submit-form__hint">What are the 2–4 things someone should take away?</p>
+                <div className="submit-form__learnings-header">
+                    <p className="submit-form__hint">What are a few (3-5ish) things someone should take away?</p>
+                    <button
+                        type="button"
+                        className="submit-form__generate"
+                        onClick={handleGenerateBullets}
+                        disabled={!url.trim() || generatingBullets}
+                        title={!url.trim() ? 'Enter a URL first' : 'Generate with AI'}
+                    >
+                        {generatingBullets ? 'Generating…' : '✦ Generate with AI'}
+                    </button>
+                </div>
                 <div className="submit-form__bullets">
                     {bullets.map( ( bullet, i ) => (
                         <div key={i} className="submit-form__bullet-row">

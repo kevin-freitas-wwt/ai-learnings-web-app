@@ -57,7 +57,11 @@
 }
 
 .entry-card__summary li {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
     margin-bottom: 5px;
+    overflow: hidden;
     padding-left: 14px;
     position: relative;
 }
@@ -67,6 +71,13 @@
     content: '·';
     left: 4px;
     position: absolute;
+}
+
+.entry-card__more {
+    color: var(--text);
+    font-size: 11px;
+    margin: -4px 0 12px 4px;
+    opacity: 0.4;
 }
 
 .entry-card__footer {

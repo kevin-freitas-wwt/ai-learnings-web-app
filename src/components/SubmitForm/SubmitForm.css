@@ -95,6 +95,36 @@
     border-color: var(--accent-border);
 }
 
+/* Key Learnings header */
+
+.submit-form__learnings-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+.submit-form__generate {
+    background: none;
+    border: 1px solid var(--accent-border);
+    border-radius: 6px;
+    color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 3px 10px;
+    transition: background 0.12s, opacity 0.12s;
+}
+
+.submit-form__generate:hover:not(:disabled) {
+    background: var(--accent-bg);
+}
+
+.submit-form__generate:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+}
+
 /* Bullets */
 
 .submit-form__bullets {

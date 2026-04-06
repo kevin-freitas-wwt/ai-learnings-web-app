@@ -26,10 +26,13 @@ function EntryCard( { entry, focused } ) {
             </div>
             <h2 className="entry-card__title">{title}</h2>
             <ul className="entry-card__summary">
-                {summary.map( ( bullet, i ) => (
+                {summary.slice( 0, 2 ).map( ( bullet, i ) => (
                     <li key={i}>{bullet}</li>
                 ) )}
             </ul>
+            {summary.length > 2 && (
+                <p className="entry-card__more">…and {summary.length - 2} more</p>
+            )}
             <div className="entry-card__footer">
                 <div className="entry-card__source">
                     <img
