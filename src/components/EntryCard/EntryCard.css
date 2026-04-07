@@ -57,9 +57,6 @@
 }
 
 .entry-card__summary li {
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    display: -webkit-box;
     margin-bottom: 5px;
     overflow: hidden;
     padding-left: 14px;

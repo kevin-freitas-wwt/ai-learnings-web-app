@@ -15,7 +15,6 @@
     --text-h: #2a0c00;
 
     -moz-osx-font-smoothing: grayscale;
-    -webkit-font-smoothing: antialiased;
     background: #f5f0ea;
     color: var(--text);
     color-scheme: light dark;

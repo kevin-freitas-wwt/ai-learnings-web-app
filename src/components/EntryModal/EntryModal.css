@@ -509,10 +509,6 @@
     scrollbar-width: none;
 }
 
-.entry-modal__related-items::-webkit-scrollbar {
-    display: none;
-}
-
 .entry-modal__related-card {
     background: var(--code-bg);
     border: 1px solid var(--border);
@@ -559,11 +555,8 @@
 
 .entry-modal__related-card-title {
     color: var(--text-h);
-    display: -webkit-box;
     font-size: 12px;
     line-height: 138%;
     margin: 0;
     overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
 }

@@ -28,10 +28,6 @@
     scrollbar-width: none;
 }
 
-.hot-strip__items::-webkit-scrollbar {
-    display: none;
-}
-
 .hot-strip__item {
     align-items: center;
     border: 1px solid var(--border);

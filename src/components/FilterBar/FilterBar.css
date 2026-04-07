@@ -63,10 +63,6 @@
     scrollbar-width: none;
 }
 
-.filter-bar__tags::-webkit-scrollbar {
-    display: none;
-}
-
 .filter-bar__tag {
     background: none;
     border: 1px solid var(--border);
