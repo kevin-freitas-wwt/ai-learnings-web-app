@@ -40,6 +40,10 @@
     opacity: 0.55;
 }
 
+.submit-form__hint--published {
+    opacity: 0.4;
+}
+
 .submit-form__hint--warn {
     color: var(--accent);
     opacity: 1;

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { formatDate } from '../../utils/relativeTime.js'
 import { Link, useNavigate } from 'react-router-dom'
 import { TEAM } from '../../data/team.js'
 import { useEntries } from '../../context/useEntries.js'
@@ -24,6 +25,7 @@ function SubmitForm( { back = '/' } ) {
     const [tagInput, setTagInput] = useState( '' )
     const [submitterName, setSubmitterName] = useState( () => localStorage.getItem( 'aih_submitter_name' ) || '' )
     const [readingTime, setReadingTime] = useState( '' )
+    const [publishedAt, setPublishedAt] = useState( null )
     const [fetchingTitle, setFetchingTitle] = useState( false )
     const [duplicateEntry, setDuplicateEntry] = useState( null )
     const [nameMatches, setNameMatches] = useState( [] )
@@ -43,6 +45,7 @@ function SubmitForm( { back = '/' } ) {
                 if ( res.ok ) {
                     const data = await res.json()
                     if ( data.title ) setTitle( data.title )
+                    if ( data.published_at ) setPublishedAt( data.published_at )
                 }
             } catch {
                 // gracefully skip — form works without auto-fill
@@ -146,6 +149,7 @@ function SubmitForm( { back = '/' } ) {
             created_at: new Date().toISOString(),
             submitter_name: submitterName.trim() || null,
             reading_time: readingTime ? Number( readingTime ) : null,
+            published_at: publishedAt ?? null,
         }
 
         const res = await fetch( '/api/entries', {
@@ -207,6 +211,11 @@ function SubmitForm( { back = '/' } ) {
                     onChange={( e ) => setTitle( e.target.value )}
                     required
                 />
+                {publishedAt && (
+                    <p className="submit-form__hint submit-form__hint--published">
+                        Published {formatDate( publishedAt )}
+                    </p>
+                )}
             </div>
 
             <div className="submit-form__field">

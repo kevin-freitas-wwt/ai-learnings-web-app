@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { relativeTime } from '../../utils/relativeTime.js'
+import { formatDate } from '../../utils/relativeTime.js'
 import './EntryCard.css'
 
 function EntryCard( { entry, focused } ) {
-    const { id, url, title, summary, created_at, reading_time } = entry
+    const { id, url, title, summary, reading_time, published_at } = entry
     const hostname = new URL( url ).hostname.replace( 'www.', '' )
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
     const cardRef = useRef( null )
@@ -40,12 +40,14 @@ function EntryCard( { entry, focused } ) {
                         height="14"
                     />
                     <span className="entry-card__domain">{hostname}</span>
+                    {published_at && (
+                        <span className="entry-card__published">{formatDate( published_at )}</span>
+                    )}
                 </div>
                 <div className="entry-card__details">
                     {reading_time && (
                         <span className="entry-card__reading-time">{reading_time} min</span>
                     )}
-                    <span className="entry-card__time">{relativeTime( created_at )}</span>
                 </div>
             </div>
         </Link>

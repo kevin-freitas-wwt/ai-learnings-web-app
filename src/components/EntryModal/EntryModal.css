@@ -81,6 +81,12 @@
     margin: 0 0 12px;
 }
 
+.entry-modal__source-row {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
 .entry-modal__source {
     align-items: center;
     color: var(--accent);
@@ -108,6 +114,12 @@
 .entry-modal__external {
     font-size: 13px;
     opacity: 0.7;
+}
+
+.entry-modal__published {
+    color: var(--text);
+    font-size: 12px;
+    opacity: 0.45;
 }
 
 .entry-modal__summary {

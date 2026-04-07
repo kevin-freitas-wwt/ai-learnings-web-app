@@ -112,6 +112,19 @@
     white-space: nowrap;
 }
 
+.entry-card__published {
+    color: var(--text);
+    font-size: 11px;
+    opacity: 0.4;
+    white-space: nowrap;
+}
+
+.entry-card__published::before {
+    content: '·';
+    margin-right: 5px;
+    opacity: 0.6;
+}
+
 .entry-card__details {
     align-items: center;
     display: flex;

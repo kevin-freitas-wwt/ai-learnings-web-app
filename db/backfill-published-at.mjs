@@ -1,5 +1,19 @@
+import { neon } from '@neondatabase/serverless'
+import { readFileSync } from 'fs'
+
+// Load .env.local manually
+const env = readFileSync( '.env.local', 'utf8' )
+for ( const line of env.split( '\n' ) ) {
+    const [key, ...rest] = line.split( '=' )
+    if ( key && rest.length ) {
+        const val = rest.join( '=' ).trim().replace( /^["']|["']$/g, '' )
+        process.env[key.trim()] = val
+    }
+}
+
+const sql = neon( process.env.POSTGRES_URL )
+
 function extractPublishedAt( html ) {
-    // Priority order: structured meta tags → JSON-LD → <time> element
     const metaPatterns = [
         /property=["']article:published_time["'][^>]*content=["']([^"']+)["']/i,
         /content=["']([^"']+)["'][^>]*property=["']article:published_time["']/i,
@@ -19,7 +33,6 @@ function extractPublishedAt( html ) {
         }
     }
 
-    // JSON-LD
     const jsonLdMatch = html.match( /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i )
     if ( jsonLdMatch ) {
         try {
@@ -29,12 +42,9 @@ function extractPublishedAt( html ) {
                 const d = new Date( raw )
                 if ( !isNaN( d.getTime() ) ) return d.toISOString()
             }
-        } catch {
-            // malformed JSON-LD, skip
-        }
+        } catch { /* skip */ }
     }
 
-    // <time datetime="...">
     const timeMatch = html.match( /<time[^>]+datetime=["']([^"']+)["']/i )
     if ( timeMatch ) {
         const d = new Date( timeMatch[1] )
@@ -44,32 +54,32 @@ function extractPublishedAt( html ) {
     return null
 }
 
-export default async function handler( req, res ) {
-    const { url } = req.query
-
-    if ( !url ) {
-        return res.status( 400 ).json( { error: 'Missing url parameter' } )
-    }
-
+async function fetchPublishedAt( url ) {
     try {
-        const response = await fetch( url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; AI-Learnings-Hub/1.0)',
-            },
-            signal: AbortSignal.timeout( 5000 ),
+        const res = await fetch( url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AI-Learnings-Hub/1.0)' },
+            signal: AbortSignal.timeout( 8000 ),
         } )
-
-        if ( !response.ok ) {
-            return res.status( 200 ).json( { title: null, published_at: null } )
-        }
-
-        const html = await response.text()
-        const titleMatch = html.match( /<title[^>]*>([^<]+)<\/title>/i )
-        const title = titleMatch ? titleMatch[1].trim().replace( /\s+/g, ' ' ) : null
-        const published_at = extractPublishedAt( html )
-
-        return res.status( 200 ).json( { title, published_at } )
+        if ( !res.ok ) return null
+        const html = await res.text()
+        return extractPublishedAt( html )
     } catch {
-        return res.status( 200 ).json( { title: null, published_at: null } )
+        return null
     }
 }
+
+const entries = await sql`SELECT id, url FROM entries WHERE published_at IS NULL`
+console.log( `Found ${entries.length} entries to backfill\n` )
+
+for ( const entry of entries ) {
+    process.stdout.write( `  ${entry.url.slice( 0, 60 )}… ` )
+    const published_at = await fetchPublishedAt( entry.url )
+    if ( published_at ) {
+        await sql`UPDATE entries SET published_at = ${published_at} WHERE id = ${entry.id}`
+        console.log( `✓ ${new Date( published_at ).toLocaleDateString( 'en-US', { month: 'short', day: 'numeric', year: 'numeric' } )}` )
+    } else {
+        console.log( '— not found' )
+    }
+}
+
+console.log( '\nDone.' )

@@ -1,3 +1,10 @@
+export function formatDate( dateStr ) {
+    if ( !dateStr ) return null
+    const d = new Date( dateStr )
+    if ( isNaN( d.getTime() ) ) return null
+    return d.toLocaleDateString( 'en-US', { month: 'short', day: 'numeric', year: 'numeric' } )
+}
+
 export function relativeTime( dateStr ) {
     const now = new Date()
     const date = new Date( dateStr )

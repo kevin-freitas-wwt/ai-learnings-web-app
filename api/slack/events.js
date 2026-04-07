@@ -16,8 +16,6 @@ function verifySlackSignature( req, rawBody ) {
     const slackSig = req.headers['x-slack-signature']
 
     if ( !signingSecret || !timestamp || !slackSig ) return false
-
-    // Reject requests older than 5 minutes
     if ( Math.abs( Date.now() / 1000 - Number( timestamp ) ) > 300 ) return false
 
     const base = `v0:${timestamp}:${rawBody}`
@@ -29,25 +27,13 @@ function verifySlackSignature( req, rawBody ) {
     }
 }
 
-/**
- * Parse a Slack message body for a submission.
- * Expected (loose) format:
- *   <URL>
- *   - bullet one
- *   - bullet two
- *   #tag1 #tag2
- *
- * Returns null if no URL found.
- */
 function parseMessage( text ) {
     if ( !text ) return null
 
-    // Extract first URL
     const urlMatch = text.match( /https?:\/\/[^\s>]+/ )
     if ( !urlMatch ) return null
     const url = urlMatch[0].replace( /[<>]/g, '' )
 
-    // Extract hashtag-style tags (not part of URLs)
     const tags = []
     const tagRe = /(?<![:/\w])#(\w[\w-]*)/g
     let m
@@ -55,7 +41,6 @@ function parseMessage( text ) {
         tags.push( m[1].toLowerCase() )
     }
 
-    // Extract bullet lines (-, *, •, or numbered)
     const bullets = []
     for ( const line of text.split( '\n' ) ) {
         const stripped = line.replace( /^[\s\-\*•\d\.]+/, '' ).trim()
@@ -96,27 +81,21 @@ function estimateReadingTime( bullets ) {
 // Handler
 // ---------------------------------------------------------------------------
 
-export const config = { api: { bodyParser: false } }
-
 export default async function handler( req, res ) {
     if ( req.method !== 'POST' ) return res.status( 405 ).end()
 
-    // Read raw body for signature verification
-    const rawBody = await new Promise( ( resolve ) => {
-        const chunks = []
-        req.on( 'data', ( c ) => chunks.push( c ) )
-        req.on( 'end', () => resolve( Buffer.concat( chunks ).toString( 'utf8' ) ) )
-    } )
+    // Vercel pre-parses JSON bodies; reconstruct raw string for signature verification
+    const body = req.body
+    const rawBody = JSON.stringify( body )
+
+    // Respond to Slack's one-time URL verification challenge immediately,
+    // before signature check (safe — challenge contains no sensitive data)
+    if ( body?.type === 'url_verification' ) {
+        return res.status( 200 ).json( { challenge: body.challenge } )
+    }
 
     if ( !verifySlackSignature( req, rawBody ) ) {
         return res.status( 401 ).json( { error: 'Invalid signature' } )
-    }
-
-    const body = JSON.parse( rawBody )
-
-    // Slack URL verification challenge (one-time during app setup)
-    if ( body.type === 'url_verification' ) {
-        return res.status( 200 ).json( { challenge: body.challenge } )
     }
 
     // Acknowledge immediately — Slack expects 200 within 3s
@@ -124,7 +103,7 @@ export default async function handler( req, res ) {
 
     const event = body.event
     if ( !event || event.type !== 'message' ) return
-    if ( event.subtype ) return  // ignore edits, deletes, bot messages
+    if ( event.subtype ) return
     if ( event.bot_id ) return
 
     const channel = process.env.SLACK_CHANNEL_ID

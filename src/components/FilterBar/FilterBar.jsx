@@ -143,7 +143,7 @@ function FilterBar() {
                     onChange={( e ) => setParam( 'sort', e.target.value )}
                     aria-label="Sort order"
                 >
-                    <option value="newest">Newest</option>
+                    <option value="newest">Recently Added</option>
                     <option value="most-clicked">Most Clicked</option>
                     <option value="most-faved">Most Fav&apos;d</option>
                 </select>

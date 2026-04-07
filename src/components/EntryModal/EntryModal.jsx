@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useEntries } from '../../context/useEntries.js'
-import { relativeTime } from '../../utils/relativeTime.js'
+import { relativeTime, formatDate } from '../../utils/relativeTime.js'
 import './EntryModal.css'
 
 function EntryModal() {
@@ -187,22 +187,27 @@ function EntryModal() {
 
                 <div className="entry-modal__header">
                     <h2 className="entry-modal__title" id="entry-modal-title">{entry.title}</h2>
-                    <a
-                        href={entry.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="entry-modal__source"
-                    >
-                        <img
-                            src={faviconUrl}
-                            alt=""
-                            className="entry-modal__favicon"
-                            width="16"
-                            height="16"
-                        />
-                        <span className="entry-modal__domain">{hostname}</span>
-                        <span className="entry-modal__external">↗</span>
-                    </a>
+                    <div className="entry-modal__source-row">
+                        <a
+                            href={entry.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="entry-modal__source"
+                        >
+                            <img
+                                src={faviconUrl}
+                                alt=""
+                                className="entry-modal__favicon"
+                                width="16"
+                                height="16"
+                            />
+                            <span className="entry-modal__domain">{hostname}</span>
+                            <span className="entry-modal__external">↗</span>
+                        </a>
+                        {entry.published_at && (
+                            <span className="entry-modal__published">{formatDate( entry.published_at )}</span>
+                        )}
+                    </div>
                 </div>
 
                 {editing ? (
