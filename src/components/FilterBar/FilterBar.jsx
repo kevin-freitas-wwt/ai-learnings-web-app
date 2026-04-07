@@ -7,7 +7,7 @@ function FilterBar() {
     const [searchParams, setSearchParams] = useSearchParams()
     const search = searchParams.get( 'search' ) || ''
     const tags = ( searchParams.get( 'tags' ) || '' ).split( ',' ).filter( Boolean )
-    const sort = searchParams.get( 'sort' ) || 'newest'
+    const sort = searchParams.get( 'sort' ) || 'freshest'
     const submitter = searchParams.get( 'submitter' ) || ''
 
     const { entries } = useEntries()
@@ -143,6 +143,7 @@ function FilterBar() {
                     onChange={( e ) => setParam( 'sort', e.target.value )}
                     aria-label="Sort order"
                 >
+                    <option value="freshest">Freshest</option>
                     <option value="newest">Recently Added</option>
                     <option value="most-clicked">Most Clicked</option>
                     <option value="most-faved">Most Fav&apos;d</option>

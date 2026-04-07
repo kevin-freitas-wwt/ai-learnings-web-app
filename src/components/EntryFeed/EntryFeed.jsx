@@ -12,7 +12,7 @@ function EntryFeed() {
     const [searchParams] = useSearchParams()
     const search = searchParams.get( 'search' ) || ''
     const tags = ( searchParams.get( 'tags' ) || '' ).split( ',' ).filter( Boolean )
-    const sort = searchParams.get( 'sort' ) || 'newest'
+    const sort = searchParams.get( 'sort' ) || 'freshest'
     const submitter = searchParams.get( 'submitter' ) || ''
 
     const [lastVisit] = useState( () => localStorage.getItem( 'aih_last_visit' ) )
@@ -30,7 +30,7 @@ function EntryFeed() {
     let oldEntries = sorted
     let newCount = 0
 
-    if ( lastVisit && sort === 'newest' ) {
+    if ( lastVisit && ( sort === 'newest' || sort === 'freshest' ) ) {
         const cutoff = new Date( lastVisit )
         newEntries = sorted.filter( ( e ) => new Date( e.created_at ) > cutoff )
         oldEntries = sorted.filter( ( e ) => new Date( e.created_at ) <= cutoff )
