@@ -223,7 +223,26 @@ async function handleQuery( query, slack, channelId ) {
 async function getDisplayName( slack, userId ) {
     try {
         const res = await slack.users.info( { user: userId } )
-        return res.user?.profile?.display_name || res.user?.real_name || null
+        const profile = res.user?.profile
+        if ( !profile ) return null
+
+        const first = profile.first_name?.trim()
+        const last = profile.last_name?.trim()
+
+        if ( first && last ) {
+            return `${first} ${last[0]}.`
+        }
+
+        // Fall back to real_name (e.g. "Kevin Freitas" → "Kevin F.")
+        const real = ( profile.real_name || res.user?.real_name || '' ).trim()
+        if ( real ) {
+            const parts = real.split( /\s+/ )
+            return parts.length >= 2
+                ? `${parts[0]} ${parts[parts.length - 1][0]}.`
+                : parts[0]
+        }
+
+        return null
     } catch {
         return null
     }
