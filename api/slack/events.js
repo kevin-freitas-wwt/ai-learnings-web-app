@@ -308,12 +308,23 @@ export default async function handler( req, res ) {
 
     const slack = new WebClient( process.env.SLACK_BOT_TOKEN )
 
-    // @mentions in a channel — strip the mention and treat as a query
+    // @mentions in a channel — strip the mention, then treat as submission or query
     if ( event.type === 'app_mention' ) {
         const text = ( event.text || '' ).replace( /<@[A-Z0-9]+>/g, '' ).trim()
         console.log( '[slack/events] app_mention — text:', text )
-        const query = parseQuery( text ) || { type: 'help' }
-        await handleQuery( query, slack, event.channel ).catch( console.error )
+        const parsed = parseMessage( text )
+        if ( parsed && parsed.bullets.length > 0 ) {
+            await saveEntry( parsed, event, slack ).catch( console.error )
+        } else if ( parsed && parsed.bullets.length === 0 ) {
+            await slack.chat.postMessage( {
+                channel: event.channel,
+                thread_ts: event.ts,
+                text: 'Add a short description below the URL so I know what to save:\n```@bot https://example.com  #tag1 #tag2\nKey takeaway from this article.```',
+            } ).catch( console.error )
+        } else {
+            const query = parseQuery( text ) || { type: 'help' }
+            await handleQuery( query, slack, event.channel ).catch( console.error )
+        }
         return res.status( 200 ).end()
     }
 
