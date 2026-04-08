@@ -420,13 +420,12 @@ export default async function handler( req, res ) {
         return res.status( 200 ).end()
     }
 
-    // Channel submission — acknowledge immediately, then do slow work
-    res.status( 200 ).end()
-
+    // Channel submission — do work inline then respond (Vercel terminates after res.end())
     const parsed = parseMessage( event.text )
     console.log( '[slack/events] channel parseMessage result:', parsed ? { url: parsed.url, bullets: parsed.bullets.length } : null )
-    if ( !parsed || parsed.bullets.length === 0 ) return
+    if ( !parsed || parsed.bullets.length === 0 ) return res.status( 200 ).end()
     await saveEntry( parsed, event, slack )
+    return res.status( 200 ).end()
 }
 
 async function saveEntry( parsed, event, slack ) {
