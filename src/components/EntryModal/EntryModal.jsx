@@ -19,6 +19,8 @@ function EntryModal() {
 
     const [editing, setEditing] = useState( false )
     const [editBullets, setEditBullets] = useState( [] )
+    const [editTags, setEditTags] = useState( [] )
+    const [tagInput, setTagInput] = useState( '' )
     const [saving, setSaving] = useState( false )
     const [saveError, setSaveError] = useState( '' )
 
@@ -55,13 +57,32 @@ function EntryModal() {
 
     function startEdit() {
         setEditBullets( [...entry.summary] )
+        setEditTags( [...entry.tags] )
+        setTagInput( '' )
         setSaveError( '' )
         setEditing( true )
     }
 
     function cancelEdit() {
         setEditing( false )
+        setTagInput( '' )
         setSaveError( '' )
+    }
+
+    function handleTagKeyDown( e ) {
+        if ( ( e.key === 'Enter' || e.key === ',' ) && tagInput.trim() ) {
+            e.preventDefault()
+            const tag = tagInput.trim().toLowerCase().replace( /\s+/g, '-' ).replace( /[^a-z0-9-]/g, '' )
+            if ( tag && !editTags.includes( tag ) ) setEditTags( [...editTags, tag] )
+            setTagInput( '' )
+        }
+        if ( e.key === 'Backspace' && !tagInput && editTags.length > 0 ) {
+            setEditTags( editTags.slice( 0, -1 ) )
+        }
+    }
+
+    function removeEditTag( tag ) {
+        setEditTags( editTags.filter( ( t ) => t !== tag ) )
     }
 
     function handleEditBulletChange( i, value ) {
@@ -85,13 +106,21 @@ function EntryModal() {
         setSaving( true )
         setSaveError( '' )
         try {
-            const res = await fetch( `/api/entries/${id}/summary`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify( { summary: trimmed, submitter_name: myName } ),
-            } )
-            if ( !res.ok ) {
-                const { error } = await res.json().catch( () => ( {} ) )
+            const [summaryRes, tagsRes] = await Promise.all( [
+                fetch( `/api/entries/${id}/summary`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify( { summary: trimmed, submitter_name: myName } ),
+                } ),
+                fetch( `/api/entries/${id}/tags`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify( { tags: editTags, submitter_name: myName } ),
+                } ),
+            ] )
+            const failed = !summaryRes.ok ? summaryRes : !tagsRes.ok ? tagsRes : null
+            if ( failed ) {
+                const { error } = await failed.json().catch( () => ( {} ) )
                 setSaveError( error || 'Save failed' )
                 return
             }
@@ -237,6 +266,30 @@ function EntryModal() {
                         <button type="button" className="entry-modal__edit-add" onClick={addEditBullet}>
                             + Add bullet
                         </button>
+                        <div className="entry-modal__edit-tags-section">
+                            <span className="entry-modal__edit-tags-label">Tags</span>
+                            <div className="entry-modal__edit-tag-area">
+                                {editTags.map( ( tag ) => (
+                                    <span key={tag} className="entry-modal__edit-tag">
+                                        #{tag}
+                                        <button
+                                            type="button"
+                                            className="entry-modal__edit-tag-remove"
+                                            onClick={() => removeEditTag( tag )}
+                                            aria-label={`Remove tag ${tag}`}
+                                        >×</button>
+                                    </span>
+                                ) )}
+                                <input
+                                    type="text"
+                                    className="entry-modal__edit-tag-input"
+                                    placeholder={editTags.length ? '' : 'Type a tag, press Enter or comma…'}
+                                    value={tagInput}
+                                    onChange={( e ) => setTagInput( e.target.value )}
+                                    onKeyDown={handleTagKeyDown}
+                                />
+                            </div>
+                        </div>
                         {saveError && <p className="entry-modal__edit-error">{saveError}</p>}
                         <div className="entry-modal__edit-actions">
                             <button type="button" className="entry-modal__edit-cancel" onClick={cancelEdit}>
