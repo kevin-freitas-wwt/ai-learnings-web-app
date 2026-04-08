@@ -210,28 +210,72 @@ export default async function handler( req, res ) {
         return res.status( 401 ).json( { error: 'Invalid signature' } )
     }
 
-    // Acknowledge immediately — Slack expects 200 within 3s
-    res.status( 200 ).end()
-
     const event = body.event
-    if ( !event || event.type !== 'message' ) return
-    if ( event.subtype ) return
-    if ( event.bot_id ) return
+    if ( !event || event.type !== 'message' || event.subtype || event.bot_id ) {
+        return res.status( 200 ).end()
+    }
 
     const isDM = event.channel_type === 'im'
     const channel = process.env.SLACK_CHANNEL_ID
-    if ( !isDM && channel && event.channel !== channel ) return
+    if ( !isDM && channel && event.channel !== channel ) {
+        return res.status( 200 ).end()
+    }
 
     const slack = new WebClient( process.env.SLACK_BOT_TOKEN )
 
-    // DMs: try to answer as a query before attempting a submission
+    // DMs: try to answer as a query first — do work before responding (fast path,
+    // avoids Vercel terminating the function after res.end())
     if ( isDM ) {
         const query = parseQuery( event.text )
         if ( query ) {
             await handleQuery( query, slack, event.channel ).catch( console.error )
-            return
+            return res.status( 200 ).end()
+        }
+
+        // Not a query — check if it looks like a submission (has a URL)
+        const parsed = parseMessage( event.text )
+        if ( !parsed ) {
+            await slack.chat.postMessage( {
+                channel: event.channel,
+                text: 'Here\'s what I can do:',
+                blocks: [
+                    {
+                        type: 'section',
+                        text: { type: 'mrkdwn', text: '*Here\'s what I can do:*' },
+                    },
+                    {
+                        type: 'section',
+                        text: {
+                            type: 'mrkdwn',
+                            text: '*Search learnings*\n`articles about agents`\n`posts tagged llms`\n`show me prompting`',
+                        },
+                    },
+                    {
+                        type: 'section',
+                        text: {
+                            type: 'mrkdwn',
+                            text: '*See recent posts*\n`recent articles`\n`show me the latest`',
+                        },
+                    },
+                    {
+                        type: 'section',
+                        text: {
+                            type: 'mrkdwn',
+                            text: '*Save a new learning*\nPaste a URL with a short description and any `#tags`:\n```https://example.com/article  #agents #llms\nKey insight from this article.```',
+                        },
+                    },
+                    {
+                        type: 'context',
+                        elements: [{ type: 'mrkdwn', text: `You can also browse and submit learnings at <${APP_URL}|AI Learnings Hub>` }],
+                    },
+                ],
+            } ).catch( console.error )
+            return res.status( 200 ).end()
         }
     }
+
+    // Submission path — acknowledge immediately, then do slow work (title fetch etc.)
+    res.status( 200 ).end()
 
     // Channel message or DM with a URL — treat as a submission
     const parsed = parseMessage( event.text )
