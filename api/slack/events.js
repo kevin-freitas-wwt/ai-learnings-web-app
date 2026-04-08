@@ -362,23 +362,11 @@ export default async function handler( req, res ) {
 
     const slack = new WebClient( process.env.SLACK_BOT_TOKEN )
 
-    // @mentions in a channel — strip the mention, then treat as submission or query
+    // @mentions in a channel — strip the mention, then treat same as a DM
     if ( event.type === 'app_mention' ) {
         const text = ( event.text || '' ).replace( /<@[A-Z0-9]+>/g, '' ).trim()
         console.log( '[slack/events] app_mention — text:', text )
-        const parsed = parseMessage( text )
-        if ( parsed && parsed.bullets.length > 0 ) {
-            await saveEntry( parsed, event, slack ).catch( console.error )
-        } else if ( parsed && parsed.bullets.length === 0 ) {
-            await slack.chat.postMessage( {
-                channel: event.channel,
-                thread_ts: event.ts,
-                text: 'Add a short description below the URL so I know what to save:\n```@bot https://example.com  #tag1 #tag2\nKey takeaway from this article.```',
-            } ).catch( console.error )
-        } else {
-            const query = parseQuery( text ) || { type: 'help' }
-            await handleQuery( query, slack, event.channel ).catch( console.error )
-        }
+        await handleChannelMention( text, event, slack )
         return res.status( 200 ).end()
     }
 
@@ -423,15 +411,37 @@ export default async function handler( req, res ) {
         return res.status( 200 ).end()
     }
 
-    // Channel: only process messages that contain an @mention (directed at someone/bot)
+    // Channel: only process messages that contain an @mention
     const hasMention = /<@[A-Z0-9]+>/.test( event.text || '' )
     if ( !hasMention ) return res.status( 200 ).end()
 
-    const parsed = parseMessage( event.text )
-    console.log( '[slack/events] channel parseMessage result:', parsed ? { url: parsed.url, bullets: parsed.bullets.length } : null )
-    if ( !parsed || parsed.bullets.length === 0 ) return res.status( 200 ).end()
-    await saveEntry( parsed, event, slack )
+    const mentionText = ( event.text || '' ).replace( /<@[A-Z0-9]+>/g, '' ).trim()
+    await handleChannelMention( mentionText, event, slack )
     return res.status( 200 ).end()
+}
+
+async function handleChannelMention( text, event, slack ) {
+    const query = parseQuery( text )
+    if ( query ) {
+        await handleQuery( query, slack, event.channel ).catch( console.error )
+        return
+    }
+
+    const parsed = parseMessage( text )
+    console.log( '[slack/events] channel parseMessage result:', parsed ? { url: parsed.url, bullets: parsed.bullets.length } : null )
+    if ( !parsed ) {
+        await sendHelp( slack, event.channel ).catch( console.error )
+        return
+    }
+    if ( parsed.bullets.length === 0 ) {
+        await slack.chat.postMessage( {
+            channel: event.channel,
+            thread_ts: event.ts,
+            text: 'Add a short description below the URL so I know what to save:\n```@bot https://example.com  #tag1 #tag2\nKey takeaway from this article.```',
+        } ).catch( console.error )
+        return
+    }
+    await saveEntry( parsed, event, slack ).catch( console.error )
 }
 
 async function saveEntry( parsed, event, slack ) {
