@@ -59,6 +59,12 @@ function parseQuery( text ) {
     if ( !text ) return null
     const t = text.trim()
 
+    // Help: "help", "how does this work", "what can you do", etc.
+    if ( /^(help|hi|hello|hey|howdy|sup|yo)[\s!?.,]*$/i.test( t ) ||
+         /\b(help|how (does|do) (this|you|it) work|what can you do|what do you do|commands?|instructions?)\b/i.test( t ) ) {
+        return { type: 'help' }
+    }
+
     // Recent: "recent", "latest", "most recent", "show me the latest", etc.
     if ( /\b(recent|latest|newest|last few|most recent|new posts?|new articles?)\b/i.test( t ) ) {
         return { type: 'recent' }
@@ -114,7 +120,49 @@ function formatEntryBlock( entry ) {
     }
 }
 
+async function sendHelp( slack, channelId ) {
+    await slack.chat.postMessage( {
+        channel: channelId,
+        text: 'Here\'s what I can do:',
+        blocks: [
+            {
+                type: 'section',
+                text: { type: 'mrkdwn', text: '*Here\'s what I can do:*' },
+            },
+            {
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: '*Search learnings*\n`articles about agents`\n`posts tagged llms`\n`show me prompting`',
+                },
+            },
+            {
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: '*See recent posts*\n`recent articles`\n`show me the latest`',
+                },
+            },
+            {
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: '*Save a new learning*\nPaste a URL with a short description and any `#tags`:\n```https://example.com/article  #agents #llms\nKey insight from this article.```',
+                },
+            },
+            {
+                type: 'context',
+                elements: [{ type: 'mrkdwn', text: `You can also browse and submit learnings at <${APP_URL}|AI Learnings Hub>` }],
+            },
+        ],
+    } )
+}
+
 async function handleQuery( query, slack, channelId ) {
+    if ( query.type === 'help' ) {
+        return sendHelp( slack, channelId )
+    }
+
     const sql = getDb()
     let entries = []
     let header = ''
@@ -243,41 +291,7 @@ export default async function handler( req, res ) {
         // Not a query — check if it looks like a submission (has a URL)
         const parsed = parseMessage( event.text )
         if ( !parsed ) {
-            await slack.chat.postMessage( {
-                channel: event.channel,
-                text: 'Here\'s what I can do:',
-                blocks: [
-                    {
-                        type: 'section',
-                        text: { type: 'mrkdwn', text: '*Here\'s what I can do:*' },
-                    },
-                    {
-                        type: 'section',
-                        text: {
-                            type: 'mrkdwn',
-                            text: '*Search learnings*\n`articles about agents`\n`posts tagged llms`\n`show me prompting`',
-                        },
-                    },
-                    {
-                        type: 'section',
-                        text: {
-                            type: 'mrkdwn',
-                            text: '*See recent posts*\n`recent articles`\n`show me the latest`',
-                        },
-                    },
-                    {
-                        type: 'section',
-                        text: {
-                            type: 'mrkdwn',
-                            text: '*Save a new learning*\nPaste a URL with a short description and any `#tags`:\n```https://example.com/article  #agents #llms\nKey insight from this article.```',
-                        },
-                    },
-                    {
-                        type: 'context',
-                        elements: [{ type: 'mrkdwn', text: `You can also browse and submit learnings at <${APP_URL}|AI Learnings Hub>` }],
-                    },
-                ],
-            } ).catch( console.error )
+            await sendHelp( slack, event.channel ).catch( console.error )
             return res.status( 200 ).end()
         }
     }
