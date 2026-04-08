@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 import { neon } from '@neondatabase/serverless'
 import { WebClient } from '@slack/web-api'
+import { generateBullets, isYouTubeUrl } from '../_bullets.js'
 
 const APP_URL = 'https://ai-learnings-web-app.vercel.app'
 
@@ -459,18 +460,26 @@ async function saveEntry( parsed, event, slack ) {
         return
     }
 
+    let bullets = parsed.bullets
+
+    // For YouTube URLs with no bullets, auto-generate via AI
+    if ( bullets.length === 0 && isYouTubeUrl( parsed.url ) ) {
+        const generated = await generateBullets( parsed.url ).catch( () => null )
+        if ( generated ) bullets = generated
+    }
+
     const submitterName = await getDisplayName( slack, event.user )
     const title = await fetchTitle( parsed.url )
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
-    const readingTime = estimateReadingTime( parsed.bullets )
+    const readingTime = estimateReadingTime( bullets )
 
     try {
         await sql`
             INSERT INTO entries
                 (id, url, title, summary, tags, click_count, heart_count, created_at, submitter_name, reading_time)
             VALUES
-                (${id}, ${parsed.url}, ${title}, ${JSON.stringify( parsed.bullets )}::jsonb,
+                (${id}, ${parsed.url}, ${title}, ${JSON.stringify( bullets )}::jsonb,
                  ${JSON.stringify( parsed.tags )}::jsonb, 0, 0, ${now},
                  ${submitterName ?? null}, ${readingTime})
         `
@@ -479,7 +488,7 @@ async function saveEntry( parsed, event, slack ) {
         await slack.chat.postMessage( {
             channel: event.channel,
             thread_ts: event.ts,
-            text: `✅ Added to AI Learnings Hub!\n*${title}*\n${parsed.bullets.length} learning${parsed.bullets.length !== 1 ? 's' : ''} · ${tagsText}`,
+            text: `✅ Added to AI Learnings Hub!\n*${title}*\n${bullets.length} learning${bullets.length !== 1 ? 's' : ''} · ${tagsText}`,
         } )
     } catch ( err ) {
         console.error( 'Slack submission error:', err )
