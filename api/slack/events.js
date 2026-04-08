@@ -46,7 +46,7 @@ function parseMessage( text ) {
     const bullets = []
     for ( const line of text.split( '\n' ) ) {
         const stripped = line.replace( /^[\s\-\*•\d\.]+/, '' ).trim()
-        if ( stripped && !stripped.match( /^https?:\/\// ) && !stripped.startsWith( '#' ) ) {
+        if ( stripped && !stripped.match( /^<https?:\/\// ) && !stripped.match( /^https?:\/\// ) && !stripped.startsWith( '#' ) ) {
             bullets.push( stripped )
         }
     }
