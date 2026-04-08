@@ -1,3 +1,15 @@
+function decodeHtmlEntities( str ) {
+    return str
+        .replace( /&amp;/g, '&' )
+        .replace( /&lt;/g, '<' )
+        .replace( /&gt;/g, '>' )
+        .replace( /&quot;/g, '"' )
+        .replace( /&#39;/g, "'" )
+        .replace( /&apos;/g, "'" )
+        .replace( /&#(\d+);/g, ( _, code ) => String.fromCharCode( Number( code ) ) )
+        .replace( /&#x([0-9a-fA-F]+);/g, ( _, hex ) => String.fromCharCode( parseInt( hex, 16 ) ) )
+}
+
 function extractPublishedAt( html ) {
     // Priority order: structured meta tags → JSON-LD → <time> element
     const metaPatterns = [
@@ -65,7 +77,7 @@ export default async function handler( req, res ) {
 
         const html = await response.text()
         const titleMatch = html.match( /<title[^>]*>([^<]+)<\/title>/i )
-        const title = titleMatch ? titleMatch[1].trim().replace( /\s+/g, ' ' ) : null
+        const title = titleMatch ? decodeHtmlEntities( titleMatch[1].trim().replace( /\s+/g, ' ' ) ) : null
         const published_at = extractPublishedAt( html )
 
         return res.status( 200 ).json( { title, published_at } )

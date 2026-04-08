@@ -1,7 +1,6 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 import { neon } from '@neondatabase/serverless'
 import { WebClient } from '@slack/web-api'
-import { generateBullets, isYouTubeUrl } from '../_bullets.js'
 
 const APP_URL = 'https://ai-learnings-web-app.vercel.app'
 
@@ -303,12 +302,24 @@ async function getDisplayName( slack, userId ) {
     }
 }
 
+function decodeHtmlEntities( str ) {
+    return str
+        .replace( /&amp;/g, '&' )
+        .replace( /&lt;/g, '<' )
+        .replace( /&gt;/g, '>' )
+        .replace( /&quot;/g, '"' )
+        .replace( /&#39;/g, "'" )
+        .replace( /&apos;/g, "'" )
+        .replace( /&#(\d+);/g, ( _, code ) => String.fromCharCode( Number( code ) ) )
+        .replace( /&#x([0-9a-fA-F]+);/g, ( _, hex ) => String.fromCharCode( parseInt( hex, 16 ) ) )
+}
+
 async function fetchTitle( url ) {
     try {
         const res = await fetch( url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout( 5000 ) } )
         const html = await res.text()
         const match = html.match( /<title[^>]*>([^<]+)<\/title>/i )
-        return match ? match[1].trim().replace( /&amp;/g, '&' ).replace( /&#39;/g, "'" ).replace( /&quot;/g, '"' ) : url
+        return match ? decodeHtmlEntities( match[1].trim().replace( /\s+/g, ' ' ) ) : url
     } catch {
         return url
     }
@@ -460,14 +471,7 @@ async function saveEntry( parsed, event, slack ) {
         return
     }
 
-    let bullets = parsed.bullets
-
-    // For YouTube URLs with no bullets, auto-generate via AI
-    if ( bullets.length === 0 && isYouTubeUrl( parsed.url ) ) {
-        const generated = await generateBullets( parsed.url ).catch( () => null )
-        if ( generated ) bullets = generated
-    }
-
+    const bullets = parsed.bullets
     const submitterName = await getDisplayName( slack, event.user )
     const title = await fetchTitle( parsed.url )
     const id = crypto.randomUUID()
