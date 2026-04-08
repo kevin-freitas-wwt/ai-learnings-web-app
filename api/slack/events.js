@@ -54,10 +54,32 @@ function parseMessage( text ) {
     return { url, tags, bullets }
 }
 
+const WORD_NUMS = { one: 1, two: 2, three: 3, four: 4, five: 5, a: 1, an: 1 }
+
+function parseLimit( text ) {
+    // Explicit digit: "3 articles", "show me 4"
+    const digitMatch = text.match( /\b(\d+)\s+(?:articles?|posts?|learnings?|results?|picks?)\b/i )
+    if ( digitMatch ) return Math.min( parseInt( digitMatch[1], 10 ), 10 )
+
+    // Word number: "three articles", "a post"
+    const wordMatch = text.match( /\b(one|two|three|four|five|a|an)\s+(?:articles?|posts?|learnings?|results?|picks?)\b/i )
+    if ( wordMatch ) return WORD_NUMS[wordMatch[1].toLowerCase()] ?? 5
+
+    // "a few"
+    if ( /\ba few\b/i.test( text ) ) return 3
+
+    // Singular noun with no number → 1
+    if ( /\b(?:article|post|learning|result|pick)\b(?!s)/i.test( text ) ) return 1
+
+    return 5
+}
+
 // Returns { type: 'recent' } or { type: 'search', term: string } or null
 function parseQuery( text ) {
     if ( !text ) return null
     const t = text.trim()
+
+    const limit = parseLimit( t )
 
     // Help: "help", "how does this work", "what can you do", etc.
     if ( /^(help|hi|hello|hey|howdy|sup|yo)[\s!?.,]*$/i.test( t ) ||
@@ -67,7 +89,7 @@ function parseQuery( text ) {
 
     // Recent: "recent", "latest", "most recent", "show me the latest", etc.
     if ( /\b(recent|latest|newest|last few|most recent|new posts?|new articles?)\b/i.test( t ) ) {
-        return { type: 'recent' }
+        return { type: 'recent', limit }
     }
 
     // By person: "articles by Kevin", "what's Kevin reading", "Kevin's posts", etc.
@@ -81,7 +103,7 @@ function parseQuery( text ) {
     for ( const re of byPersonPatterns ) {
         const match = t.match( re )
         if ( match ) {
-            return { type: 'by-person', term: match[1] }
+            return { type: 'by-person', term: match[1], limit }
         }
     }
 
@@ -98,7 +120,7 @@ function parseQuery( text ) {
         const match = t.match( re )
         if ( match ) {
             const term = match[1].replace( /^(posts?|articles?|learnings?)\s+(about\s+)?/i, '' ).trim()
-            if ( term.length > 0 ) return { type: 'search', term }
+            if ( term.length > 0 ) return { type: 'search', term, limit }
         }
     }
 
@@ -106,7 +128,7 @@ function parseQuery( text ) {
     // Only treat as search if it's short (≤ 6 words) and looks like a topic
     const words = t.split( /\s+/ )
     if ( words.length <= 6 && !t.match( /https?:\/\// ) ) {
-        return { type: 'search', term: t }
+        return { type: 'search', term: t, limit }
     }
 
     return null
@@ -182,14 +204,16 @@ async function handleQuery( query, slack, channelId ) {
     let entries = []
     let header = ''
 
+    const limit = query.limit ?? 5
+
     if ( query.type === 'recent' ) {
         entries = await sql`
             SELECT id, url, title, summary, tags, created_at, published_at, submitter_name
             FROM entries
             ORDER BY COALESCE(published_at, created_at) DESC
-            LIMIT 5
+            LIMIT ${limit}
         `
-        header = '*Most recent learnings:*'
+        header = limit === 1 ? '*Most recent learning:*' : '*Most recent learnings:*'
     } else if ( query.type === 'by-person' ) {
         const term = `%${query.term}%`
         entries = await sql`
@@ -197,7 +221,7 @@ async function handleQuery( query, slack, channelId ) {
             FROM entries
             WHERE submitter_name ILIKE ${term}
             ORDER BY COALESCE(published_at, created_at) DESC
-            LIMIT 5
+            LIMIT ${limit}
         `
         header = `*Learnings shared by ${query.term}:*`
     } else {
@@ -210,7 +234,7 @@ async function handleQuery( query, slack, channelId ) {
                 OR summary::text ILIKE ${term}
                 OR tags::text ILIKE ${term}
             ORDER BY COALESCE(published_at, created_at) DESC
-            LIMIT 5
+            LIMIT ${limit}
         `
         header = `*Results for "${query.term}":*`
     }
