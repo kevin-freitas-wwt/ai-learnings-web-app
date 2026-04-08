@@ -256,6 +256,8 @@ export default async function handler( req, res ) {
     const body = req.body
     const rawBody = JSON.stringify( body )
 
+    console.log( '[slack/events] incoming body type:', body?.type, '| event type:', body?.event?.type, '| channel_type:', body?.event?.channel_type )
+
     // Respond to Slack's one-time URL verification challenge immediately,
     // before signature check (safe — challenge contains no sensitive data)
     if ( body?.type === 'url_verification' ) {
@@ -263,11 +265,13 @@ export default async function handler( req, res ) {
     }
 
     if ( !verifySlackSignature( req, rawBody ) ) {
+        console.log( '[slack/events] signature verification FAILED' )
         return res.status( 401 ).json( { error: 'Invalid signature' } )
     }
 
     const event = body.event
     if ( !event || event.subtype || event.bot_id ) {
+        console.log( '[slack/events] skipping — no event, subtype, or bot_id:', { subtype: event?.subtype, bot_id: event?.bot_id } )
         return res.status( 200 ).end()
     }
 
@@ -276,42 +280,49 @@ export default async function handler( req, res ) {
     // @mentions in a channel — strip the mention and treat as a query
     if ( event.type === 'app_mention' ) {
         const text = ( event.text || '' ).replace( /<@[A-Z0-9]+>/g, '' ).trim()
+        console.log( '[slack/events] app_mention — text:', text )
         const query = parseQuery( text ) || { type: 'help' }
         await handleQuery( query, slack, event.channel ).catch( console.error )
         return res.status( 200 ).end()
     }
 
     if ( event.type !== 'message' ) {
+        console.log( '[slack/events] skipping non-message event type:', event.type )
         return res.status( 200 ).end()
     }
 
     const isDM = event.channel_type === 'im'
     const channel = process.env.SLACK_CHANNEL_ID
+    console.log( '[slack/events] message — isDM:', isDM, '| channel:', event.channel, '| expected channel:', channel )
+
     if ( !isDM && channel && event.channel !== channel ) {
+        console.log( '[slack/events] skipping — wrong channel' )
         return res.status( 200 ).end()
     }
 
     if ( isDM ) {
-        // Try query first
         const query = parseQuery( event.text )
+        console.log( '[slack/events] DM parseQuery result:', query )
         if ( query ) {
             await handleQuery( query, slack, event.channel ).catch( console.error )
             return res.status( 200 ).end()
         }
 
-        // Try submission — do work inline for DMs (avoids Vercel terminating after res.end)
         const parsed = parseMessage( event.text )
+        console.log( '[slack/events] DM parseMessage result:', parsed ? { url: parsed.url, bullets: parsed.bullets.length, tags: parsed.tags } : null )
         if ( !parsed ) {
             await sendHelp( slack, event.channel ).catch( console.error )
             return res.status( 200 ).end()
         }
         if ( parsed.bullets.length === 0 ) {
+            console.log( '[slack/events] DM has URL but no bullets — prompting user' )
             await slack.chat.postMessage( {
                 channel: event.channel,
                 text: 'Add a short description below the URL so I know what to save:\n```https://example.com/article  #tag1 #tag2\nKey takeaway from this article.```',
             } ).catch( console.error )
             return res.status( 200 ).end()
         }
+        console.log( '[slack/events] DM submission — saving entry' )
         await saveEntry( parsed, event, slack )
         return res.status( 200 ).end()
     }
@@ -320,6 +331,7 @@ export default async function handler( req, res ) {
     res.status( 200 ).end()
 
     const parsed = parseMessage( event.text )
+    console.log( '[slack/events] channel parseMessage result:', parsed ? { url: parsed.url, bullets: parsed.bullets.length } : null )
     if ( !parsed || parsed.bullets.length === 0 ) return
     await saveEntry( parsed, event, slack )
 }
