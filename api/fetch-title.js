@@ -1,3 +1,12 @@
+function cleanTitle( str ) {
+    if ( !str ) return str
+    // Strip trailing or leading site name after common delimiters: " - ", " | ", " – ", " — ", " · ", " :: ", " » ", " › "
+    return str
+        .replace( /\s*[-|–—·:»›]\s*[^-|–—·:»›]+$/, '' )
+        .replace( /^[^-|–—·:»›]+\s*[-|–—·:»›]\s*/, ( match, offset ) => offset === 0 && str.lastIndexOf( match ) > 0 ? '' : match )
+        .trim()
+}
+
 function decodeHtmlEntities( str ) {
     return str
         .replace( /&amp;/g, '&' )
@@ -77,7 +86,7 @@ export default async function handler( req, res ) {
 
         const html = await response.text()
         const titleMatch = html.match( /<title[^>]*>([^<]+)<\/title>/i )
-        const title = titleMatch ? decodeHtmlEntities( titleMatch[1].trim().replace( /\s+/g, ' ' ) ) : null
+        const title = titleMatch ? cleanTitle( decodeHtmlEntities( titleMatch[1].trim().replace( /\s+/g, ' ' ) ) ) : null
         const published_at = extractPublishedAt( html )
 
         return res.status( 200 ).json( { title, published_at } )

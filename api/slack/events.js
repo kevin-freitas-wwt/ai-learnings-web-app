@@ -302,6 +302,13 @@ async function getDisplayName( slack, userId ) {
     }
 }
 
+function cleanTitle( str ) {
+    if ( !str ) return str
+    return str
+        .replace( /\s*[-|–—·:»›]\s*[^-|–—·:»›]+$/, '' )
+        .trim()
+}
+
 function decodeHtmlEntities( str ) {
     return str
         .replace( /&amp;/g, '&' )
@@ -319,7 +326,7 @@ async function fetchTitle( url ) {
         const res = await fetch( url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout( 5000 ) } )
         const html = await res.text()
         const match = html.match( /<title[^>]*>([^<]+)<\/title>/i )
-        return match ? decodeHtmlEntities( match[1].trim().replace( /\s+/g, ' ' ) ) : url
+        return match ? cleanTitle( decodeHtmlEntities( match[1].trim().replace( /\s+/g, ' ' ) ) ) : url
     } catch {
         return url
     }
