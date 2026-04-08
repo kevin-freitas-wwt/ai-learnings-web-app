@@ -267,7 +267,21 @@ export default async function handler( req, res ) {
     }
 
     const event = body.event
-    if ( !event || event.type !== 'message' || event.subtype || event.bot_id ) {
+    if ( !event || event.subtype || event.bot_id ) {
+        return res.status( 200 ).end()
+    }
+
+    const slack = new WebClient( process.env.SLACK_BOT_TOKEN )
+
+    // @mentions in a channel — strip the mention and treat as a query
+    if ( event.type === 'app_mention' ) {
+        const text = ( event.text || '' ).replace( /<@[A-Z0-9]+>/g, '' ).trim()
+        const query = parseQuery( text ) || { type: 'help' }
+        await handleQuery( query, slack, event.channel ).catch( console.error )
+        return res.status( 200 ).end()
+    }
+
+    if ( event.type !== 'message' ) {
         return res.status( 200 ).end()
     }
 
@@ -276,8 +290,6 @@ export default async function handler( req, res ) {
     if ( !isDM && channel && event.channel !== channel ) {
         return res.status( 200 ).end()
     }
-
-    const slack = new WebClient( process.env.SLACK_BOT_TOKEN )
 
     // DMs: try to answer as a query first — do work before responding (fast path,
     // avoids Vercel terminating the function after res.end())
