@@ -264,6 +264,11 @@ export default async function handler( req, res ) {
         return res.status( 200 ).json( { challenge: body.challenge } )
     }
 
+    const signingSecret = process.env.SLACK_SIGNING_SECRET
+    const timestamp = req.headers['x-slack-request-timestamp']
+    const slackSig = req.headers['x-slack-signature']
+    console.log( '[slack/events] sig check — secret set:', !!signingSecret, '| timestamp:', timestamp, '| slack-sig present:', !!slackSig, '| rawBody length:', rawBody.length, '| rawBody preview:', rawBody.slice( 0, 80 ) )
+
     if ( !verifySlackSignature( req, rawBody ) ) {
         console.log( '[slack/events] signature verification FAILED' )
         return res.status( 401 ).json( { error: 'Invalid signature' } )
