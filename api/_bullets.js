@@ -22,20 +22,54 @@ async function fetchYouTubeTranscript( videoId ) {
     try {
         const pageRes = await fetch( `https://www.youtube.com/watch?v=${videoId}`, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; AI-Learnings-Hub/1.0)',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                 'Accept-Language': 'en-US,en;q=0.9',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             },
-            signal: AbortSignal.timeout( 8000 ),
+            signal: AbortSignal.timeout( 10000 ),
         } )
-        if ( !pageRes.ok ) return null
+        if ( !pageRes.ok ) {
+            console.log( '[_bullets] YouTube page fetch failed:', pageRes.status )
+            return null
+        }
         const html = await pageRes.text()
 
-        const captionMatch = html.match( /"captionTracks":\[{"baseUrl":"(https:[^"]+)"/ )
-        if ( !captionMatch ) return null
+        // YouTube embeds caption data as JSON inside ytInitialPlayerResponse
+        const playerMatch = html.match( /ytInitialPlayerResponse\s*=\s*(\{.+?\})\s*;/ )
+        let captionUrl = null
 
-        const captionUrl = JSON.parse( `"${captionMatch[1]}"` )
+        if ( playerMatch ) {
+            try {
+                const player = JSON.parse( playerMatch[1] )
+                const tracks = player?.captions?.playerCaptionsTracklistRenderer?.captionTracks
+                if ( Array.isArray( tracks ) && tracks.length > 0 ) {
+                    // Prefer English, fall back to first available
+                    const en = tracks.find( ( t ) => t.languageCode === 'en' || t.languageCode?.startsWith( 'en' ) )
+                    captionUrl = ( en || tracks[0] ).baseUrl
+                }
+            } catch {
+                // fall through to regex approach
+            }
+        }
+
+        // Fallback: regex for baseUrl in raw page source
+        if ( !captionUrl ) {
+            const captionMatch = html.match( /"captionTracks":\s*\[.*?"baseUrl":"(https:[^"]+)"/ )
+            if ( captionMatch ) {
+                captionUrl = captionMatch[1].replace( /\\u0026/g, '&' )
+            }
+        }
+
+        if ( !captionUrl ) {
+            console.log( '[_bullets] no captionTracks found for video:', videoId )
+            return null
+        }
+
         const captionRes = await fetch( captionUrl, { signal: AbortSignal.timeout( 5000 ) } )
-        if ( !captionRes.ok ) return null
+        if ( !captionRes.ok ) {
+            console.log( '[_bullets] caption fetch failed:', captionRes.status )
+            return null
+        }
 
         const xml = await captionRes.text()
         const text = [...xml.matchAll( /<text[^>]*>([\s\S]*?)<\/text>/g )]
@@ -50,8 +84,10 @@ async function fetchYouTubeTranscript( videoId ) {
             .replace( /\s+/g, ' ' )
             .trim()
 
+        console.log( '[_bullets] transcript length:', text.length )
         return text.slice( 0, 12000 ) || null
-    } catch {
+    } catch ( err ) {
+        console.log( '[_bullets] transcript error:', err.message )
         return null
     }
 }
@@ -79,7 +115,7 @@ async function fetchArticleText( url ) {
 export async function generateBullets( url ) {
     if ( !process.env.AI_GATEWAY_API_KEY ) return null
 
-    let contentBlock = `URL: ${url}`
+    let contentBlock = null
     let isVideo = false
 
     const ytId = extractYouTubeId( url )
@@ -96,8 +132,11 @@ export async function generateBullets( url ) {
         }
     }
 
+    // No content to summarize — bail early rather than sending Claude a bare URL
+    if ( !contentBlock ) return null
+
     const prompt = isVideo
-        ? `Extract 3 to 5 key learnings from this YouTube video. Each learning should be a single concise sentence under 20 words capturing a distinct, practical insight. Return only a JSON array of strings with no other text.\n\n${contentBlock}`
+        ? `Extract 3 to 5 key learnings from this YouTube video transcript. Each learning should be a single concise sentence under 20 words capturing a distinct, practical insight. Return only a JSON array of strings with no other text.\n\n${contentBlock}`
         : `Extract 3 to 5 key learnings from this article. Each learning should be a single concise sentence under 20 words capturing a distinct, practical insight. Return only a JSON array of strings with no other text.\n\n${contentBlock}`
 
     const response = await fetch( 'https://ai-gateway.vercel.sh/v1/chat/completions', {
@@ -149,10 +188,11 @@ export async function generateBullets( url ) {
 
     const FAILURE_PHRASES = [
         "i'm sorry", "i cannot", "i can't", "unable to", "could not",
-        "couldn't", "not able to", "failed to", "no content", "error",
+        "couldn't", "not able to", "failed to", "no content", "cannot access",
+        "can't access", "don't have the ability", "i don't have", "unfortunately",
     ]
-    const isFailure = bullets.length === 1 &&
-        FAILURE_PHRASES.some( ( p ) => bullets[0].toLowerCase().includes( p ) )
+    const combined = bullets.join( ' ' ).toLowerCase()
+    const isFailure = FAILURE_PHRASES.some( ( p ) => combined.includes( p ) )
 
     return isFailure ? null : bullets
 }

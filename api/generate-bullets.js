@@ -1,4 +1,4 @@
-import { generateBullets } from './_bullets.js'
+import { generateBullets, isYouTubeUrl } from './_bullets.js'
 
 export default async function handler( req, res ) {
     if ( req.method !== 'POST' ) {
@@ -17,9 +17,10 @@ export default async function handler( req, res ) {
     const bullets = await generateBullets( url )
 
     if ( !bullets ) {
-        return res.status( 422 ).json( {
-            error: "Couldn't extract learnings from that URL. The page may be paywalled or bot-protected — please fill them in manually.",
-        } )
+        const error = isYouTubeUrl( url )
+            ? "Couldn't extract a transcript from that video. It may not have captions — please fill in the learnings manually."
+            : "Couldn't extract learnings from that URL. The page may be paywalled or bot-protected — please fill them in manually."
+        return res.status( 422 ).json( { error } )
     }
 
     return res.status( 200 ).json( { bullets } )
