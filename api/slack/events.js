@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 import { neon } from '@neondatabase/serverless'
 import { WebClient } from '@slack/web-api'
+import { generateBullets } from '../_bullets.js'
 
 const APP_URL = 'https://ai-learnings-web-app.vercel.app'
 
@@ -417,14 +418,6 @@ export default async function handler( req, res ) {
             await sendHelp( slack, event.channel ).catch( console.error )
             return res.status( 200 ).end()
         }
-        if ( parsed.bullets.length === 0 ) {
-            console.log( '[slack/events] DM has URL but no bullets — prompting user' )
-            await slack.chat.postMessage( {
-                channel: event.channel,
-                text: 'Add a short description below the URL so I know what to save:\n```https://example.com/article  #tag1 #tag2\nKey takeaway from this article.```',
-            } ).catch( console.error )
-            return res.status( 200 ).end()
-        }
         console.log( '[slack/events] DM submission — saving entry' )
         await saveEntry( parsed, event, slack )
         return res.status( 200 ).end()
@@ -452,14 +445,6 @@ async function handleChannelMention( text, event, slack ) {
         await sendHelp( slack, event.channel ).catch( console.error )
         return
     }
-    if ( parsed.bullets.length === 0 ) {
-        await slack.chat.postMessage( {
-            channel: event.channel,
-            thread_ts: event.ts,
-            text: 'Add a short description below the URL so I know what to save:\n```@bot https://example.com  #tag1 #tag2\nKey takeaway from this article.```',
-        } ).catch( console.error )
-        return
-    }
     await saveEntry( parsed, event, slack ).catch( console.error )
 }
 
@@ -478,12 +463,25 @@ async function saveEntry( parsed, event, slack ) {
         return
     }
 
-    const bullets = parsed.bullets
+    let bullets = parsed.bullets
+    let aiGenerated = false
+    if ( bullets.length === 0 ) {
+        console.log( '[slack/events] no bullets provided — attempting AI generation for:', parsed.url )
+        const generated = await generateBullets( parsed.url ).catch( () => null )
+        if ( generated?.length ) {
+            bullets = generated
+            aiGenerated = true
+            console.log( '[slack/events] AI generated', bullets.length, 'bullets' )
+        } else {
+            console.log( '[slack/events] AI generation failed — saving with empty summary' )
+        }
+    }
+
     const submitterName = await getDisplayName( slack, event.user )
     const title = await fetchTitle( parsed.url )
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
-    const readingTime = estimateReadingTime( bullets )
+    const readingTime = bullets.length ? estimateReadingTime( bullets ) : 1
 
     try {
         await sql`
@@ -496,10 +494,13 @@ async function saveEntry( parsed, event, slack ) {
         `
 
         const tagsText = parsed.tags.length > 0 ? parsed.tags.map( ( t ) => `#${t}` ).join( ' ' ) : 'no tags'
+        const learningsNote = bullets.length
+            ? `${bullets.length} learning${bullets.length !== 1 ? 's' : ''}${aiGenerated ? ' (AI-generated)' : ''}`
+            : 'no key learnings'
         await slack.chat.postMessage( {
             channel: event.channel,
             thread_ts: event.ts,
-            text: `✅ Added to AI Learnings Hub!\n*${title}*\n${bullets.length} learning${bullets.length !== 1 ? 's' : ''} · ${tagsText}`,
+            text: `✅ Added to AI Learnings Hub!\n*${title}*\n${learningsNote} · ${tagsText}`,
         } )
     } catch ( err ) {
         console.error( 'Slack submission error:', err )
