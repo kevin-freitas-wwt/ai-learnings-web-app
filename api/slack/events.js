@@ -99,11 +99,16 @@ function formatEntryBlock( entry ) {
         : new Date( entry.created_at ).toLocaleDateString( 'en-US', { month: 'short', day: 'numeric', year: 'numeric' } )
     const meta = [date, tagsText].filter( Boolean ).join( '  ·  ' )
 
+    const bullets = Array.isArray( entry.summary ) ? entry.summary : []
+    const bulletsText = bullets.length > 0
+        ? '\n' + bullets.map( ( b ) => `• ${b}` ).join( '\n' )
+        : ''
+
     return {
         type: 'section',
         text: {
             type: 'mrkdwn',
-            text: `*<${entry.url}|${entry.title}>*\n${meta}`,
+            text: `*<${entry.url}|${entry.title}>*\n${meta}${bulletsText}`,
         },
     }
 }
@@ -115,7 +120,7 @@ async function handleQuery( query, slack, channelId ) {
 
     if ( query.type === 'recent' ) {
         entries = await sql`
-            SELECT id, url, title, tags, created_at, published_at
+            SELECT id, url, title, summary, tags, created_at, published_at
             FROM entries
             ORDER BY COALESCE(published_at, created_at) DESC
             LIMIT 5
@@ -124,7 +129,7 @@ async function handleQuery( query, slack, channelId ) {
     } else {
         const term = `%${query.term}%`
         entries = await sql`
-            SELECT id, url, title, tags, created_at, published_at
+            SELECT id, url, title, summary, tags, created_at, published_at
             FROM entries
             WHERE
                 title ILIKE ${term}
@@ -161,6 +166,8 @@ async function handleQuery( query, slack, channelId ) {
         channel: channelId,
         text: header,
         blocks,
+        unfurl_links: false,
+        unfurl_media: false,
     } )
 }
 
