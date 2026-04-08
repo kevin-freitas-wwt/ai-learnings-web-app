@@ -249,14 +249,24 @@ function estimateReadingTime( bullets ) {
 // Handler
 // ---------------------------------------------------------------------------
 
+async function readRawBody( req ) {
+    return new Promise( ( resolve ) => {
+        const chunks = []
+        req.on( 'data', ( chunk ) => chunks.push( Buffer.isBuffer( chunk ) ? chunk : Buffer.from( chunk ) ) )
+        req.on( 'end', () => resolve( Buffer.concat( chunks ).toString( 'utf8' ) ) )
+        req.on( 'error', () => resolve( null ) )
+    } )
+}
+
 export default async function handler( req, res ) {
     if ( req.method !== 'POST' ) return res.status( 405 ).end()
 
-    // Vercel pre-parses JSON bodies; reconstruct raw string for signature verification
-    const body = req.body
-    const rawBody = JSON.stringify( body )
+    // Try to read raw body from stream (Vercel may or may not have consumed it)
+    const streamBody = await readRawBody( req )
+    const rawBody = ( streamBody && streamBody.length > 0 ) ? streamBody : JSON.stringify( req.body )
+    const body = streamBody && streamBody.length > 0 ? JSON.parse( streamBody ) : req.body
 
-    console.log( '[slack/events] incoming body type:', body?.type, '| event type:', body?.event?.type, '| channel_type:', body?.event?.channel_type )
+    console.log( '[slack/events] incoming body type:', body?.type, '| event type:', body?.event?.type, '| channel_type:', body?.event?.channel_type, '| rawBody source:', streamBody?.length > 0 ? 'stream' : 'json.stringify' )
 
     // Respond to Slack's one-time URL verification challenge immediately,
     // before signature check (safe — challenge contains no sensitive data)
@@ -264,10 +274,7 @@ export default async function handler( req, res ) {
         return res.status( 200 ).json( { challenge: body.challenge } )
     }
 
-    const signingSecret = process.env.SLACK_SIGNING_SECRET
-    const timestamp = req.headers['x-slack-request-timestamp']
-    const slackSig = req.headers['x-slack-signature']
-    console.log( '[slack/events] sig check — secret set:', !!signingSecret, '| timestamp:', timestamp, '| slack-sig present:', !!slackSig, '| rawBody length:', rawBody.length, '| rawBody preview:', rawBody.slice( 0, 80 ) )
+    console.log( '[slack/events] sig check — secret set:', !!process.env.SLACK_SIGNING_SECRET, '| rawBody source:', streamBody?.length > 0 ? 'stream' : 'json.stringify', '| rawBody length:', rawBody.length )
 
     if ( !verifySlackSignature( req, rawBody ) ) {
         console.log( '[slack/events] signature verification FAILED' )
