@@ -70,6 +70,21 @@ function parseQuery( text ) {
         return { type: 'recent' }
     }
 
+    // By person: "articles by Kevin", "what's Kevin reading", "Kevin's posts", etc.
+    const byPersonPatterns = [
+        /\bby\s+([A-Za-z]+)\b/i,
+        /\bfrom\s+([A-Za-z]+)\b/i,
+        /\b([A-Za-z]+)'s\s+(?:posts?|articles?|learnings?|picks?|reads?)/i,
+        /\bwhat(?:'s|\s+is|\s+has)\s+([A-Za-z]+)\s+(?:reading|watching|listening|sharing|posted|shared|been reading)/i,
+        /\bshow me\s+([A-Za-z]+)'s/i,
+    ]
+    for ( const re of byPersonPatterns ) {
+        const match = t.match( re )
+        if ( match ) {
+            return { type: 'by-person', term: match[1] }
+        }
+    }
+
     // Search: "about X", "on X", "tagged X", "tag X", "articles about X", "posts about X", etc.
     const searchPatterns = [
         /\babout\s+(.+)/i,
@@ -133,7 +148,7 @@ async function sendHelp( slack, channelId ) {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: '*Search learnings*\n`articles about agents`\n`posts tagged llms`\n`show me prompting`',
+                    text: '*Search learnings*\n`articles about agents`\n`posts tagged llms`\n`show me prompting`\n`articles by Kevin`\n`what\'s Kevin reading?`',
                 },
             },
             {
@@ -175,6 +190,16 @@ async function handleQuery( query, slack, channelId ) {
             LIMIT 5
         `
         header = '*Most recent learnings:*'
+    } else if ( query.type === 'by-person' ) {
+        const term = `%${query.term}%`
+        entries = await sql`
+            SELECT id, url, title, summary, tags, created_at, published_at, submitter_name
+            FROM entries
+            WHERE submitter_name ILIKE ${term}
+            ORDER BY COALESCE(published_at, created_at) DESC
+            LIMIT 5
+        `
+        header = `*Learnings shared by ${query.term}:*`
     } else {
         const term = `%${query.term}%`
         entries = await sql`
@@ -193,9 +218,11 @@ async function handleQuery( query, slack, channelId ) {
     if ( entries.length === 0 ) {
         await slack.chat.postMessage( {
             channel: channelId,
-            text: query.type === 'search'
-                ? `No learnings found matching "${query.term}". Try a different keyword or browse everything at ${APP_URL}`
-                : `No learnings found yet. Be the first to add one at ${APP_URL}`,
+            text: query.type === 'by-person'
+                ? `No learnings found from "${query.term}". They may not have shared anything yet.`
+                : query.type === 'search'
+                    ? `No learnings found matching "${query.term}". Try a different keyword or browse everything at ${APP_URL}`
+                    : `No learnings found yet. Be the first to add one at ${APP_URL}`,
         } )
         return
     }
