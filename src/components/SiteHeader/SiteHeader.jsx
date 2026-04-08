@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useEntries } from '../../context/useEntries.js'
-import { exportHearts } from '../../utils/exportHearts.js'
 import './SiteHeader.css'
 
 const SLOT_EMOJIS = ['🎲', '🔮', '🌀', '⚡️', '🎯', '✨', '🎪', '🌈', '🎭', '🦄', '🚀', '💡', '🧠', '🎨', '🔥', '💫']
@@ -14,10 +13,6 @@ function SiteHeader() {
     const navigate = useNavigate()
     const location = useLocation()
     const { entries } = useEntries()
-    const [hasHearts] = useState( () => {
-        const ids = JSON.parse( localStorage.getItem( 'aih_hearts' ) || '[]' )
-        return ids.length > 0
-    } )
     const [slotState, setSlotState] = useState( null )
     const intervalsRef = useRef( [] )
 
@@ -62,10 +57,6 @@ function SiteHeader() {
         }, 1900 )
     }
 
-    function handleExport() {
-        exportHearts( entries )
-    }
-
     return (
         <>
             {slotState && (
@@ -92,11 +83,6 @@ function SiteHeader() {
                     <h1>AI Learnings Hub</h1>
                 </Link>
                 <nav className="site-header__nav">
-                    {hasHearts && (
-                        <button className="site-header__export" onClick={handleExport} title="Export your hearted learnings">
-                            ♥ Export
-                        </button>
-                    )}
                     <button className="site-header__random" onClick={handleRandom} disabled={!!slotState}>
                         ✦ Random
                     </button>
