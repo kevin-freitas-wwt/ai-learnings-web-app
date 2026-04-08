@@ -97,7 +97,8 @@ function formatEntryBlock( entry ) {
     const date = entry.published_at
         ? new Date( entry.published_at ).toLocaleDateString( 'en-US', { month: 'short', day: 'numeric', year: 'numeric' } )
         : new Date( entry.created_at ).toLocaleDateString( 'en-US', { month: 'short', day: 'numeric', year: 'numeric' } )
-    const meta = [date, tagsText].filter( Boolean ).join( '  ·  ' )
+    const sharedBy = entry.submitter_name ? `Shared by ${entry.submitter_name}` : null
+    const meta = [date, tagsText, sharedBy].filter( Boolean ).join( '  ·  ' )
 
     const bullets = Array.isArray( entry.summary ) ? entry.summary : []
     const bulletsText = bullets.length > 0
@@ -120,7 +121,7 @@ async function handleQuery( query, slack, channelId ) {
 
     if ( query.type === 'recent' ) {
         entries = await sql`
-            SELECT id, url, title, summary, tags, created_at, published_at
+            SELECT id, url, title, summary, tags, created_at, published_at, submitter_name
             FROM entries
             ORDER BY COALESCE(published_at, created_at) DESC
             LIMIT 5
@@ -129,7 +130,7 @@ async function handleQuery( query, slack, channelId ) {
     } else {
         const term = `%${query.term}%`
         entries = await sql`
-            SELECT id, url, title, summary, tags, created_at, published_at
+            SELECT id, url, title, summary, tags, created_at, published_at, submitter_name
             FROM entries
             WHERE
                 title ILIKE ${term}
