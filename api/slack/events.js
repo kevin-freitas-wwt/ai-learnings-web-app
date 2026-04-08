@@ -291,30 +291,40 @@ export default async function handler( req, res ) {
         return res.status( 200 ).end()
     }
 
-    // DMs: try to answer as a query first — do work before responding (fast path,
-    // avoids Vercel terminating the function after res.end())
     if ( isDM ) {
+        // Try query first
         const query = parseQuery( event.text )
         if ( query ) {
             await handleQuery( query, slack, event.channel ).catch( console.error )
             return res.status( 200 ).end()
         }
 
-        // Not a query — check if it looks like a submission (has a URL)
+        // Try submission — do work inline for DMs (avoids Vercel terminating after res.end)
         const parsed = parseMessage( event.text )
         if ( !parsed ) {
             await sendHelp( slack, event.channel ).catch( console.error )
             return res.status( 200 ).end()
         }
+        if ( parsed.bullets.length === 0 ) {
+            await slack.chat.postMessage( {
+                channel: event.channel,
+                text: 'Add a short description below the URL so I know what to save:\n```https://example.com/article  #tag1 #tag2\nKey takeaway from this article.```',
+            } ).catch( console.error )
+            return res.status( 200 ).end()
+        }
+        await saveEntry( parsed, event, slack )
+        return res.status( 200 ).end()
     }
 
-    // Submission path — acknowledge immediately, then do slow work (title fetch etc.)
+    // Channel submission — acknowledge immediately, then do slow work
     res.status( 200 ).end()
 
-    // Channel message or DM with a URL — treat as a submission
     const parsed = parseMessage( event.text )
     if ( !parsed || parsed.bullets.length === 0 ) return
+    await saveEntry( parsed, event, slack )
+}
 
+async function saveEntry( parsed, event, slack ) {
     const sql = getDb()
     const submitterName = await getDisplayName( slack, event.user )
     const title = await fetchTitle( parsed.url )
