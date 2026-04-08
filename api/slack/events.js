@@ -423,12 +423,32 @@ export default async function handler( req, res ) {
         return res.status( 200 ).end()
     }
 
-    // Regular channel messages are handled via app_mention — ignore here to prevent duplicates
+    // Channel: only process messages that contain an @mention (directed at someone/bot)
+    const hasMention = /<@[A-Z0-9]+>/.test( event.text || '' )
+    if ( !hasMention ) return res.status( 200 ).end()
+
+    const parsed = parseMessage( event.text )
+    console.log( '[slack/events] channel parseMessage result:', parsed ? { url: parsed.url, bullets: parsed.bullets.length } : null )
+    if ( !parsed || parsed.bullets.length === 0 ) return res.status( 200 ).end()
+    await saveEntry( parsed, event, slack )
     return res.status( 200 ).end()
 }
 
 async function saveEntry( parsed, event, slack ) {
     const sql = getDb()
+
+    // Deduplicate: skip if this URL was already saved in the last 60 seconds
+    const recent = await sql`
+        SELECT id FROM entries
+        WHERE url = ${parsed.url}
+        AND created_at > NOW() - INTERVAL '60 seconds'
+        LIMIT 1
+    `
+    if ( recent.length > 0 ) {
+        console.log( '[slack/events] duplicate submission skipped:', parsed.url )
+        return
+    }
+
     const submitterName = await getDisplayName( slack, event.user )
     const title = await fetchTitle( parsed.url )
     const id = crypto.randomUUID()
