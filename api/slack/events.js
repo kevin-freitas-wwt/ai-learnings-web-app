@@ -2,6 +2,8 @@ import { createHmac, timingSafeEqual } from 'crypto'
 import { neon } from '@neondatabase/serverless'
 import { WebClient } from '@slack/web-api'
 
+const APP_URL = 'https://ai-learnings-web-app.vercel.app'
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -50,6 +52,116 @@ function parseMessage( text ) {
     }
 
     return { url, tags, bullets }
+}
+
+// Returns { type: 'recent' } or { type: 'search', term: string } or null
+function parseQuery( text ) {
+    if ( !text ) return null
+    const t = text.trim()
+
+    // Recent: "recent", "latest", "most recent", "show me the latest", etc.
+    if ( /\b(recent|latest|newest|last few|most recent|new posts?|new articles?)\b/i.test( t ) ) {
+        return { type: 'recent' }
+    }
+
+    // Search: "about X", "on X", "tagged X", "tag X", "articles about X", "posts about X", etc.
+    const searchPatterns = [
+        /\babout\s+(.+)/i,
+        /\btagged\s+(.+)/i,
+        /\btag[s]?\s+(.+)/i,
+        /\brelated to\s+(.+)/i,
+        /\bon\s+(.+)/i,
+        /^(?:show me|find|search for|look for|get|what about)\s+(.+)/i,
+    ]
+    for ( const re of searchPatterns ) {
+        const match = t.match( re )
+        if ( match ) {
+            const term = match[1].replace( /^(posts?|articles?|learnings?)\s+(about\s+)?/i, '' ).trim()
+            if ( term.length > 0 ) return { type: 'search', term }
+        }
+    }
+
+    // Bare search: single/multi-word message with no URL that doesn't match above
+    // Only treat as search if it's short (≤ 6 words) and looks like a topic
+    const words = t.split( /\s+/ )
+    if ( words.length <= 6 && !t.match( /https?:\/\// ) ) {
+        return { type: 'search', term: t }
+    }
+
+    return null
+}
+
+function formatEntryBlock( entry ) {
+    const tags = Array.isArray( entry.tags ) ? entry.tags : []
+    const tagsText = tags.length > 0 ? tags.map( ( t ) => `#${t}` ).join( '  ' ) : ''
+    const date = entry.published_at
+        ? new Date( entry.published_at ).toLocaleDateString( 'en-US', { month: 'short', day: 'numeric', year: 'numeric' } )
+        : new Date( entry.created_at ).toLocaleDateString( 'en-US', { month: 'short', day: 'numeric', year: 'numeric' } )
+    const meta = [date, tagsText].filter( Boolean ).join( '  ·  ' )
+
+    return {
+        type: 'section',
+        text: {
+            type: 'mrkdwn',
+            text: `*<${entry.url}|${entry.title}>*\n${meta}`,
+        },
+    }
+}
+
+async function handleQuery( query, slack, channelId ) {
+    const sql = getDb()
+    let entries = []
+    let header = ''
+
+    if ( query.type === 'recent' ) {
+        entries = await sql`
+            SELECT id, url, title, tags, created_at, published_at
+            FROM entries
+            ORDER BY COALESCE(published_at, created_at) DESC
+            LIMIT 5
+        `
+        header = '*Most recent learnings:*'
+    } else {
+        const term = `%${query.term}%`
+        entries = await sql`
+            SELECT id, url, title, tags, created_at, published_at
+            FROM entries
+            WHERE
+                title ILIKE ${term}
+                OR summary::text ILIKE ${term}
+                OR tags::text ILIKE ${term}
+            ORDER BY COALESCE(published_at, created_at) DESC
+            LIMIT 5
+        `
+        header = `*Results for "${query.term}":*`
+    }
+
+    if ( entries.length === 0 ) {
+        await slack.chat.postMessage( {
+            channel: channelId,
+            text: query.type === 'search'
+                ? `No learnings found matching "${query.term}". Try a different keyword or browse everything at ${APP_URL}`
+                : `No learnings found yet. Be the first to add one at ${APP_URL}`,
+        } )
+        return
+    }
+
+    const blocks = [
+        { type: 'section', text: { type: 'mrkdwn', text: header } },
+        { type: 'divider' },
+        ...entries.map( formatEntryBlock ),
+        { type: 'divider' },
+        {
+            type: 'context',
+            elements: [{ type: 'mrkdwn', text: `<${APP_URL}|Browse all learnings on AI Learnings Hub>` }],
+        },
+    ]
+
+    await slack.chat.postMessage( {
+        channel: channelId,
+        text: header,
+        blocks,
+    } )
 }
 
 async function getDisplayName( slack, userId ) {
@@ -106,15 +218,26 @@ export default async function handler( req, res ) {
     if ( event.subtype ) return
     if ( event.bot_id ) return
 
+    const isDM = event.channel_type === 'im'
     const channel = process.env.SLACK_CHANNEL_ID
-    if ( channel && event.channel !== channel ) return
+    if ( !isDM && channel && event.channel !== channel ) return
 
+    const slack = new WebClient( process.env.SLACK_BOT_TOKEN )
+
+    // DMs: try to answer as a query before attempting a submission
+    if ( isDM ) {
+        const query = parseQuery( event.text )
+        if ( query ) {
+            await handleQuery( query, slack, event.channel ).catch( console.error )
+            return
+        }
+    }
+
+    // Channel message or DM with a URL — treat as a submission
     const parsed = parseMessage( event.text )
     if ( !parsed || parsed.bullets.length === 0 ) return
 
-    const slack = new WebClient( process.env.SLACK_BOT_TOKEN )
     const sql = getDb()
-
     const submitterName = await getDisplayName( slack, event.user )
     const title = await fetchTitle( parsed.url )
     const id = crypto.randomUUID()
