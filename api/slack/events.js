@@ -333,6 +333,15 @@ async function fetchTitle( url ) {
     }
 }
 
+function slugify( str ) {
+    return str
+        .toLowerCase()
+        .replace( /[^a-z0-9\s-]/g, '' )
+        .trim()
+        .replace( /\s+/g, '-' )
+        .replace( /-+/g, '-' )
+}
+
 function estimateReadingTime( bullets ) {
     const words = bullets.join( ' ' ).split( /\s+/ ).length
     return Math.max( 1, Math.round( words / 200 ) )
@@ -479,7 +488,7 @@ async function saveEntry( parsed, event, slack ) {
 
     const submitterName = await getDisplayName( slack, event.user )
     const title = await fetchTitle( parsed.url )
-    const id = crypto.randomUUID()
+    const id = slugify( title )
     const now = new Date().toISOString()
     const readingTime = bullets.length ? estimateReadingTime( bullets ) : 1
 
