@@ -1,5 +1,9 @@
 {
     "framework": "vite",
+    "rewrites": [
+        { "source": "/entry/:id", "destination": "/index.html" },
+        { "source": "/submit", "destination": "/index.html" }
+    ],
     "crons": [
         {
             "path": "/api/slack/daily-summary",
