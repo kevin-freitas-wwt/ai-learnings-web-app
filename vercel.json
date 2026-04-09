@@ -1,8 +1,14 @@
 {
     "framework": "vite",
+    "functions": {
+        "api/slack/weekly-summary.js": {
+            "maxDuration": 120
+        }
+    },
     "rewrites": [
         { "source": "/entry/:id", "destination": "/index.html" },
-        { "source": "/submit", "destination": "/index.html" }
+        { "source": "/submit", "destination": "/index.html" },
+        { "source": "/podcast-test", "destination": "/index.html" }
     ],
     "crons": [
         {

@@ -1,0 +1,214 @@
+.podcast-test {
+    margin: 0 auto;
+    max-width: 640px;
+    padding: 40px 0 80px;
+}
+
+.podcast-test__page-header {
+    margin-bottom: 40px;
+}
+
+.podcast-test__title {
+    margin: 0 0 8px;
+}
+
+.podcast-test__desc {
+    color: var(--text);
+    font-size: 15px;
+    opacity: 0.65;
+}
+
+.podcast-test__section {
+    margin-bottom: 48px;
+}
+
+.podcast-test__section-header {
+    align-items: flex-start;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.podcast-test__section-title {
+    margin: 0 0 4px;
+}
+
+.podcast-test__week-label {
+    color: var(--text);
+    font-size: 13px;
+    opacity: 0.55;
+}
+
+.podcast-test__hint {
+    color: var(--text);
+    font-size: 13px;
+    opacity: 0.55;
+}
+
+.podcast-test__section-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.podcast-test__btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: var(--bg);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 9px 16px;
+    transition: opacity 0.15s;
+}
+
+.podcast-test__btn:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.podcast-test__btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.podcast-test__btn--secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.podcast-test__btn--secondary:hover:not(:disabled) {
+    border-color: var(--accent-border);
+    color: var(--accent);
+    opacity: 1;
+}
+
+.podcast-test__error {
+    background: rgba(180, 50, 50, 0.08);
+    border: 1px solid rgba(180, 50, 50, 0.25);
+    border-radius: 6px;
+    color: #b43232;
+    font-size: 14px;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+}
+
+.podcast-test__empty {
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    opacity: 0.4;
+    padding: 28px 24px;
+    text-align: center;
+}
+
+.podcast-test__segments {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.podcast-test__segment {
+    align-items: flex-start;
+    display: flex;
+    gap: 8px;
+}
+
+.podcast-test__speaker {
+    border: 1px solid;
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 2px;
+    padding: 5px 0;
+    text-align: center;
+    transition: opacity 0.1s;
+    width: 58px;
+}
+
+.podcast-test__speaker:hover {
+    opacity: 0.75;
+}
+
+.podcast-test__speaker--host1 {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent);
+}
+
+.podcast-test__speaker--host2 {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text);
+    opacity: 0.7;
+}
+
+.podcast-test__segment-text {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    flex: 1;
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 150%;
+    outline: none;
+    padding: 7px 10px;
+    resize: vertical;
+    transition: border-color 0.15s;
+}
+
+.podcast-test__segment-text:focus {
+    border-color: var(--accent-border);
+}
+
+.podcast-test__segment-remove {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 12px;
+    margin-top: 2px;
+    opacity: 0.35;
+    padding: 5px 7px;
+    transition: opacity 0.15s, border-color 0.15s;
+}
+
+.podcast-test__segment-remove:hover {
+    border-color: var(--border);
+    opacity: 0.7;
+}
+
+.podcast-test__add-segment {
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 13px;
+    margin-top: 4px;
+    opacity: 0.55;
+    padding: 8px;
+    text-align: center;
+    transition: opacity 0.15s, border-color 0.15s;
+    width: 100%;
+}
+
+.podcast-test__add-segment:hover {
+    border-color: var(--accent-border);
+    opacity: 1;
+}
+
+.podcast-test__player {
+    margin-top: 4px;
+    width: 100%;
+}

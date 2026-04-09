@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 import { WebClient } from '@slack/web-api'
+import { generatePodcastScript, generatePodcastAudio } from '../_podcast.js'
 
 function getDb() {
     return neon( process.env.POSTGRES_URL )
@@ -90,11 +91,37 @@ export default async function handler( req, res ) {
         rest.forEach( ( e ) => blocks.push( { type: 'section', text: { type: 'mrkdwn', text: formatEntry( e ) } } ) )
     }
 
-    await slack.chat.postMessage( {
+    const msgResult = await slack.chat.postMessage( {
         channel,
         blocks,
         text: `📚 AI Learnings Week of ${weekStart}–${weekEnd}: ${rows.length} entries`,
+        unfurl_links: false,
+        unfurl_media: false,
     } )
+
+    // Podcast generation — non-fatal, runs after the main summary is sent
+    try {
+        const top5 = [...rows]
+            .sort( ( a, b ) => ( b.heart_count + b.click_count ) - ( a.heart_count + a.click_count ) )
+            .slice( 0, 5 )
+
+        const script = await generatePodcastScript( top5, weekStart, weekEnd )
+        if ( !script?.length ) throw new Error( 'No script generated' )
+
+        const audioBuffer = await generatePodcastAudio( script )
+        if ( !audioBuffer ) throw new Error( 'No audio generated' )
+
+        const dateSlug = weekStart.toLowerCase().replace( /\s/g, '-' )
+        await slack.files.uploadV2( {
+            channel_id: channel,
+            thread_ts: msgResult.ts,
+            filename: `ai-learnings-${dateSlug}.mp3`,
+            file: audioBuffer,
+            title: `🎙️ AI Learnings Podcast — Week of ${weekStart}–${weekEnd}`,
+        } )
+    } catch ( err ) {
+        console.error( '[weekly-summary] podcast step failed:', err.message )
+    }
 
     return res.status( 200 ).json( { ok: true, sent: true, count: rows.length } )
 }
