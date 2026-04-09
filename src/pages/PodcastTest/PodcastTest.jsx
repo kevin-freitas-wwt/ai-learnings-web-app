@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './PodcastTest.css'
 
 function PodcastTest() {
@@ -12,6 +12,14 @@ function PodcastTest() {
     const [audioLoading, setAudioLoading] = useState( false )
     const [audioError, setAudioError] = useState( null )
     const prevAudioUrl = useRef( null )
+    const scriptRef = useRef( null )
+
+    useEffect( () => {
+        const el = scriptRef.current
+        if ( !el ) return
+        el.style.height = 'auto'
+        el.style.height = `${el.scrollHeight}px`
+    }, [scriptText] )
 
     async function handleGenerateScript() {
         setScriptLoading( true )
@@ -105,6 +113,7 @@ function PodcastTest() {
 
                 {( scriptText || scriptLoading ) && (
                     <textarea
+                        ref={scriptRef}
                         className="podcast-test__script"
                         value={scriptText}
                         onChange={( e ) => setScriptText( e.target.value )}

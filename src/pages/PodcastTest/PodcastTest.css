@@ -112,7 +112,6 @@
     box-sizing: border-box;
     color: var(--text);
     display: block;
-    field-sizing: content;
     font-family: var(--sans);
     font-size: 14px;
     line-height: 160%;
