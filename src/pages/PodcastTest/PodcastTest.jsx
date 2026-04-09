@@ -10,8 +10,10 @@ function PodcastTest() {
 
     const [audioUrl, setAudioUrl] = useState( null )
     const [audioLoading, setAudioLoading] = useState( false )
+    const [audioStep, setAudioStep] = useState( '' )
     const [audioError, setAudioError] = useState( null )
     const prevAudioUrl = useRef( null )
+    const stepTimers = useRef( [] )
     const scriptRef = useRef( null )
 
     useEffect( () => {
@@ -39,10 +41,29 @@ function PodcastTest() {
         }
     }
 
+    function clearStepTimers() {
+        stepTimers.current.forEach( clearTimeout )
+        stepTimers.current = []
+    }
+
     async function handleGenerateAudio() {
         setAudioLoading( true )
         setAudioError( null )
+        setAudioUrl( null )
         if ( prevAudioUrl.current ) URL.revokeObjectURL( prevAudioUrl.current )
+
+        // Show timed steps that match the real server pipeline
+        setAudioStep( 'Connecting to ElevenLabs…' )
+        clearStepTimers()
+        const schedule = [
+            [2000,  'Generating voice…'],
+            [8000,  'Fetching background music…'],
+            [14000, 'Mixing audio tracks…'],
+        ]
+        schedule.forEach( ( [delay, label] ) => {
+            stepTimers.current.push( setTimeout( () => setAudioStep( label ), delay ) )
+        } )
+
         try {
             const script = [{ text: scriptText }]
             const res = await fetch( '/api/podcast', {
@@ -61,7 +82,9 @@ function PodcastTest() {
         } catch ( err ) {
             setAudioError( err.message )
         } finally {
+            clearStepTimers()
             setAudioLoading( false )
+            setAudioStep( '' )
         }
     }
 
@@ -127,11 +150,11 @@ function PodcastTest() {
                 <div className="podcast-test__section-header">
                     <div>
                         <h2 className="podcast-test__section-title">Audio</h2>
-                        {audioLoading && (
-                            <span className="podcast-test__hint">Generating audio, this may take ~30 seconds…</span>
+                        {audioLoading && audioStep && (
+                            <span className="podcast-test__step">{audioStep}</span>
                         )}
                         {!audioLoading && !audioUrl && scriptText && (
-                            <span className="podcast-test__hint">Includes auto-selected ambient background music</span>
+                            <span className="podcast-test__hint">Includes ambient background music</span>
                         )}
                     </div>
                     <button

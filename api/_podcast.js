@@ -111,37 +111,41 @@ async function fetchMusicUrl() {
 }
 
 async function mixWithMusic( voiceBuffer, ffmpegPath, execAsync ) {
+    if ( !ffmpegPath ) {
+        console.error( '[podcast] ffmpeg binary not found' )
+        return voiceBuffer
+    }
+
     const { writeFile, readFile, unlink } = await import( 'fs/promises' )
 
     const musicUrl = await fetchMusicUrl()
+    console.log( '[podcast] music url:', musicUrl || 'none — using brown noise fallback' )
+
     const ts = Date.now()
     const tmpVoice = `/tmp/podcast-voice-${ts}.mp3`
     const tmpOut = `/tmp/podcast-out-${ts}.mp3`
 
     await writeFile( tmpVoice, voiceBuffer )
 
-    // If no external music URL, generate brown noise as ambient background using ffmpeg lavfi
+    // lavfi anoisesrc: source params only in -i, filters (lowpass/volume) go in filter_complex
     const musicInput = musicUrl
         ? `-stream_loop -1 -i "${musicUrl}"`
-        : `-f lavfi -i "anoisesrc=color=brown:r=44100,lowpass=f=300,volume=0.4"`
+        : `-f lavfi -i anoisesrc=color=brown:r=44100`
 
-    // Duck to 8% volume, fade in 2s + fade out 3s, mix with voice (voice sets duration)
-    const cmd = [
-        ffmpegPath,
-        `-i "${tmpVoice}"`,
-        musicInput,
-        `-filter_complex "[1:a]volume=0.08,afade=t=in:st=0:d=2,afade=t=out:st=9999:d=3[bg];[0:a][bg]amix=inputs=2:duration=first[out]"`,
-        `-map "[out]"`,
-        `-c:a libmp3lame -q:a 4`,
-        `"${tmpOut}" -y`,
-    ].join( ' ' )
+    const bgFilter = musicUrl
+        ? `[1:a]volume=0.08,afade=t=in:st=0:d=2,afade=t=out:st=9999:d=3[bg]`
+        : `[1:a]lowpass=f=400,volume=0.06,afade=t=in:st=0:d=2,afade=t=out:st=9999:d=3[bg]`
 
+    const cmd = `"${ffmpegPath}" -i "${tmpVoice}" ${musicInput} -filter_complex "${bgFilter};[0:a][bg]amix=inputs=2:duration=first[out]" -map "[out]" -c:a libmp3lame -q:a 4 "${tmpOut}" -y`
+
+    console.log( '[podcast] running ffmpeg mix' )
     try {
         await execAsync( cmd, { timeout: 60000 } )
         const mixed = await readFile( tmpOut )
+        console.log( '[podcast] mix complete, size:', mixed.length )
         return mixed
     } catch ( err ) {
-        console.error( '[podcast] ffmpeg mix failed:', err.message )
+        console.error( '[podcast] ffmpeg mix failed:', err.message, err.stderr )
         return voiceBuffer
     } finally {
         await Promise.all( [unlink( tmpVoice ), unlink( tmpOut )] ).catch( () => {} )
