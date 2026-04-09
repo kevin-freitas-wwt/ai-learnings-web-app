@@ -67,10 +67,8 @@ ${JSON.stringify( entrySummaries, null, 2 )}`
     }
 }
 
-export async function generatePodcastAudio( script ) {
-    if ( !process.env.ELEVENLABS_API_KEY ) return null
-
-    const voiceId = process.env.ELEVENLABS_HOST1_VOICE_ID || '21m00Tcm4TlvDq8ikWAM' // Rachel
+async function generateVoice( script ) {
+    const voiceId = process.env.ELEVENLABS_HOST1_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'
     const fullText = script.map( ( seg ) => seg.text ).join( ' ' )
 
     const response = await fetch( `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -92,6 +90,74 @@ export async function generatePodcastAudio( script ) {
         return null
     }
 
-    const arrayBuffer = await response.arrayBuffer()
-    return Buffer.from( arrayBuffer )
+    return Buffer.from( await response.arrayBuffer() )
+}
+
+async function fetchMusicUrl() {
+    if ( process.env.PODCAST_MUSIC_URL ) return process.env.PODCAST_MUSIC_URL
+
+    try {
+        const res = await fetch(
+            'https://ccmixter.org/api/query?f=json&tags=ambient&sort=random&limit=10&lic=to',
+            { signal: AbortSignal.timeout( 5000 ) }
+        )
+        if ( !res.ok ) return null
+        const tracks = await res.json()
+        const track = tracks.find( ( t ) => t.download_url )
+        return track?.download_url ?? null
+    } catch {
+        return null
+    }
+}
+
+async function mixWithMusic( voiceBuffer, ffmpegPath, execAsync ) {
+    const { writeFile, readFile, unlink } = await import( 'fs/promises' )
+
+    const musicUrl = await fetchMusicUrl()
+    const ts = Date.now()
+    const tmpVoice = `/tmp/podcast-voice-${ts}.mp3`
+    const tmpOut = `/tmp/podcast-out-${ts}.mp3`
+
+    await writeFile( tmpVoice, voiceBuffer )
+
+    // If no external music URL, generate brown noise as ambient background using ffmpeg lavfi
+    const musicInput = musicUrl
+        ? `-stream_loop -1 -i "${musicUrl}"`
+        : `-f lavfi -i "anoisesrc=color=brown:r=44100,lowpass=f=300,volume=0.4"`
+
+    // Duck to 8% volume, fade in 2s + fade out 3s, mix with voice (voice sets duration)
+    const cmd = [
+        ffmpegPath,
+        `-i "${tmpVoice}"`,
+        musicInput,
+        `-filter_complex "[1:a]volume=0.08,afade=t=in:st=0:d=2,afade=t=out:st=9999:d=3[bg];[0:a][bg]amix=inputs=2:duration=first[out]"`,
+        `-map "[out]"`,
+        `-c:a libmp3lame -q:a 4`,
+        `"${tmpOut}" -y`,
+    ].join( ' ' )
+
+    try {
+        await execAsync( cmd, { timeout: 60000 } )
+        const mixed = await readFile( tmpOut )
+        return mixed
+    } catch ( err ) {
+        console.error( '[podcast] ffmpeg mix failed:', err.message )
+        return voiceBuffer
+    } finally {
+        await Promise.all( [unlink( tmpVoice ), unlink( tmpOut )] ).catch( () => {} )
+    }
+}
+
+export async function generatePodcastAudio( script ) {
+    if ( !process.env.ELEVENLABS_API_KEY ) return null
+
+    const voiceBuffer = await generateVoice( script )
+    if ( !voiceBuffer ) return null
+
+    const { exec } = await import( 'child_process' )
+    const { promisify } = await import( 'util' )
+    const { default: ffmpegPath } = await import( 'ffmpeg-static' )
+    const execAsync = promisify( exec )
+
+    return mixWithMusic( voiceBuffer, ffmpegPath, execAsync )
 }
