@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { formatDate } from '../../utils/relativeTime.js'
 import './EntryCard.css'
 
@@ -8,6 +8,7 @@ function EntryCard( { entry, focused } ) {
     const hostname = new URL( url ).hostname.replace( 'www.', '' )
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
     const cardRef = useRef( null )
+    const location = useLocation()
 
     useEffect( () => {
         if ( focused && cardRef.current ) {
@@ -19,6 +20,7 @@ function EntryCard( { entry, focused } ) {
         <Link
             ref={cardRef}
             to={`/entry/${id}`}
+            state={{ back: location.search }}
             className={`entry-card${focused ? ' entry-card--focused' : ''}`}
         >
             <h2 className="entry-card__title">{title}</h2>

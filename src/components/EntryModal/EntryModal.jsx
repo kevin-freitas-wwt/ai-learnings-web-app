@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useEntries } from '../../context/useEntries.js'
 import { relativeTime, formatDate } from '../../utils/relativeTime.js'
 import './EntryModal.css'
@@ -7,6 +7,7 @@ import './EntryModal.css'
 function EntryModal() {
     const { id } = useParams()
     const navigate = useNavigate()
+    const location = useLocation()
     const { entries, loading, refetch } = useEntries()
     const entry = entries.find( ( e ) => e.id === id )
 
@@ -134,8 +135,9 @@ function EntryModal() {
     }
 
     const close = useCallback( () => {
-        navigate( '/' )
-    }, [navigate] )
+        const back = location.state?.back
+        navigate( back ? `/${back}` : '/' )
+    }, [navigate, location.state] )
 
     const handleHeart = useCallback( async () => {
         const stored = JSON.parse( localStorage.getItem( 'aih_hearts' ) || '[]' )
@@ -417,7 +419,7 @@ function EntryModal() {
                                     <button
                                         key={rel.id}
                                         className="entry-modal__related-card"
-                                        onClick={() => navigate( `/entry/${rel.id}` )}
+                                        onClick={() => navigate( `/entry/${rel.id}`, { state: location.state } )}
                                     >
                                         <div className="entry-modal__related-card-source">
                                             <img src={relFavicon} alt="" width="12" height="12" />
