@@ -18,7 +18,7 @@ function PodcastTest() {
         setScriptError( null )
         setAudioUrl( null )
         try {
-            const res = await fetch( '/api/podcast/generate-script' )
+            const res = await fetch( '/api/podcast' )
             if ( !res.ok ) throw new Error( `Server error ${res.status}` )
             const data = await res.json()
             if ( !data.script?.length ) throw new Error( 'No entries found for this week' )
@@ -36,7 +36,7 @@ function PodcastTest() {
         setAudioError( null )
         if ( prevAudioUrl.current ) URL.revokeObjectURL( prevAudioUrl.current )
         try {
-            const res = await fetch( '/api/podcast/generate-audio', {
+            const res = await fetch( '/api/podcast', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify( { script } ),

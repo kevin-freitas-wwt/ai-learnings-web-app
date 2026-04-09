@@ -9,13 +9,16 @@ export default async function handler( req, res ) {
     }
 
     const { id } = req.query
-    const { tags, submitter_name } = req.body
+    const { summary, tags, submitter_name } = req.body
 
-    if ( !Array.isArray( tags ) ) {
-        return res.status( 400 ).json( { error: 'tags must be an array' } )
-    }
     if ( !submitter_name ) {
         return res.status( 400 ).json( { error: 'submitter_name required' } )
+    }
+    if ( summary !== undefined && ( !Array.isArray( summary ) || summary.length === 0 ) ) {
+        return res.status( 400 ).json( { error: 'summary must be a non-empty array' } )
+    }
+    if ( tags !== undefined && !Array.isArray( tags ) ) {
+        return res.status( 400 ).json( { error: 'tags must be an array' } )
     }
 
     const sql = neon( process.env.POSTGRES_URL )
@@ -28,6 +31,12 @@ export default async function handler( req, res ) {
         return res.status( 403 ).json( { error: 'Not authorized' } )
     }
 
-    await sql`UPDATE entries SET tags = ${JSON.stringify( tags )}::jsonb WHERE id = ${id}`
+    if ( summary !== undefined ) {
+        await sql`UPDATE entries SET summary = ${JSON.stringify( summary )}::jsonb WHERE id = ${id}`
+    }
+    if ( tags !== undefined ) {
+        await sql`UPDATE entries SET tags = ${JSON.stringify( tags )}::jsonb WHERE id = ${id}`
+    }
+
     return res.status( 200 ).json( { ok: true } )
 }

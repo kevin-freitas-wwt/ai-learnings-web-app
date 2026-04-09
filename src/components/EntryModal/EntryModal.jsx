@@ -107,21 +107,13 @@ function EntryModal() {
         setSaving( true )
         setSaveError( '' )
         try {
-            const [summaryRes, tagsRes] = await Promise.all( [
-                fetch( `/api/entries/${id}/summary`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify( { summary: trimmed, submitter_name: myName } ),
-                } ),
-                fetch( `/api/entries/${id}/tags`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify( { tags: editTags, submitter_name: myName } ),
-                } ),
-            ] )
-            const failed = !summaryRes.ok ? summaryRes : !tagsRes.ok ? tagsRes : null
-            if ( failed ) {
-                const { error } = await failed.json().catch( () => ( {} ) )
+            const editRes = await fetch( `/api/entries/${id}/edit`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify( { summary: trimmed, tags: editTags, submitter_name: myName } ),
+            } )
+            if ( !editRes.ok ) {
+                const { error } = await editRes.json().catch( () => ( {} ) )
                 setSaveError( error || 'Save failed' )
                 return
             }
@@ -150,16 +142,20 @@ function EntryModal() {
             setHearted( true )
             setHeartCount( ( c ) => c + 1 )
         }
-        fetch( `/api/entries/${id}/heart`, {
+        fetch( `/api/entries/${id}/interact`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify( { delta } ),
+            body: JSON.stringify( { action: 'heart', delta } ),
         } ).then( () => refetch() ).catch( () => {} )
     }, [hearted, id, refetch] )
 
     useEffect( () => {
         if ( !entry ) return
-        fetch( `/api/entries/${id}/click`, { method: 'POST' } ).catch( () => {} )
+        fetch( `/api/entries/${id}/interact`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify( { action: 'click' } ),
+        } ).catch( () => {} )
     }, [entry, id] )
 
     useEffect( () => {

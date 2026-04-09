@@ -41,7 +41,7 @@ function SubmitForm( { back = '/' } ) {
         if ( !title.trim() ) {
             setFetchingTitle( true )
             try {
-                const res = await fetch( `/api/fetch-title?url=${encodeURIComponent( trimmed )}` )
+                const res = await fetch( `/api/url-meta?url=${encodeURIComponent( trimmed )}` )
                 if ( res.ok ) {
                     const data = await res.json()
                     if ( data.title ) setTitle( data.title )
@@ -60,7 +60,7 @@ function SubmitForm( { back = '/' } ) {
         setGeneratingBullets( true )
         setGenerateError( '' )
         try {
-            const res = await fetch( '/api/generate-bullets', {
+            const res = await fetch( '/api/url-meta', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify( { url: url.trim() } ),

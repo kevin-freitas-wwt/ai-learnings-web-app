@@ -1,6 +1,7 @@
+import { generateBullets, isYouTubeUrl } from './_bullets.js'
+
 function cleanTitle( str ) {
     if ( !str ) return str
-    // Strip trailing or leading site name after common delimiters: " - ", " | ", " – ", " — ", " · ", " :: ", " » ", " › "
     return str
         .replace( /\s*[-|–—·:»›]\s*[^-|–—·:»›]+$/, '' )
         .replace( /^[^-|–—·:»›]+\s*[-|–—·:»›]\s*/, ( match, offset ) => offset === 0 && str.lastIndexOf( match ) > 0 ? '' : match )
@@ -20,7 +21,6 @@ function decodeHtmlEntities( str ) {
 }
 
 function extractPublishedAt( html ) {
-    // Priority order: structured meta tags → JSON-LD → <time> element
     const metaPatterns = [
         /property=["']article:published_time["'][^>]*content=["']([^"']+)["']/i,
         /content=["']([^"']+)["'][^>]*property=["']article:published_time["']/i,
@@ -40,7 +40,6 @@ function extractPublishedAt( html ) {
         }
     }
 
-    // JSON-LD
     const jsonLdMatch = html.match( /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i )
     if ( jsonLdMatch ) {
         try {
@@ -55,7 +54,6 @@ function extractPublishedAt( html ) {
         }
     }
 
-    // <time datetime="...">
     const timeMatch = html.match( /<time[^>]+datetime=["']([^"']+)["']/i )
     if ( timeMatch ) {
         const d = new Date( timeMatch[1] )
@@ -66,31 +64,49 @@ function extractPublishedAt( html ) {
 }
 
 export default async function handler( req, res ) {
-    const { url } = req.query
+    // GET ?url=... → fetch title + published date
+    if ( req.method === 'GET' ) {
+        const { url } = req.query
+        if ( !url ) return res.status( 400 ).json( { error: 'Missing url parameter' } )
 
-    if ( !url ) {
-        return res.status( 400 ).json( { error: 'Missing url parameter' } )
-    }
+        try {
+            const response = await fetch( url, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AI-Learnings-Hub/1.0)' },
+                signal: AbortSignal.timeout( 5000 ),
+            } )
+            if ( !response.ok ) return res.status( 200 ).json( { title: null, published_at: null } )
 
-    try {
-        const response = await fetch( url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; AI-Learnings-Hub/1.0)',
-            },
-            signal: AbortSignal.timeout( 5000 ),
-        } )
+            const html = await response.text()
+            const titleMatch = html.match( /<title[^>]*>([^<]+)<\/title>/i )
+            const title = titleMatch ? cleanTitle( decodeHtmlEntities( titleMatch[1].trim().replace( /\s+/g, ' ' ) ) ) : null
+            const published_at = extractPublishedAt( html )
 
-        if ( !response.ok ) {
+            return res.status( 200 ).json( { title, published_at } )
+        } catch {
             return res.status( 200 ).json( { title: null, published_at: null } )
         }
-
-        const html = await response.text()
-        const titleMatch = html.match( /<title[^>]*>([^<]+)<\/title>/i )
-        const title = titleMatch ? cleanTitle( decodeHtmlEntities( titleMatch[1].trim().replace( /\s+/g, ' ' ) ) ) : null
-        const published_at = extractPublishedAt( html )
-
-        return res.status( 200 ).json( { title, published_at } )
-    } catch {
-        return res.status( 200 ).json( { title: null, published_at: null } )
     }
+
+    // POST { url } → generate AI bullets
+    if ( req.method === 'POST' ) {
+        const { url } = req.body
+        if ( !url ) return res.status( 400 ).json( { error: 'Missing url' } )
+
+        if ( !process.env.AI_GATEWAY_API_KEY ) {
+            return res.status( 503 ).json( { error: 'AI not configured' } )
+        }
+
+        const bullets = await generateBullets( url )
+
+        if ( !bullets ) {
+            const error = isYouTubeUrl( url )
+                ? "Couldn't extract a transcript from that video. It may not have captions — please fill in the learnings manually."
+                : "Couldn't extract learnings from that URL. The page may be paywalled or bot-protected — please fill them in manually."
+            return res.status( 422 ).json( { error } )
+        }
+
+        return res.status( 200 ).json( { bullets } )
+    }
+
+    res.status( 405 ).end()
 }
