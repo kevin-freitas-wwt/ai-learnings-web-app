@@ -19,8 +19,7 @@ function EntryCard( { entry, focused } ) {
     return (
         <Link
             ref={cardRef}
-            to={`/entry/${id}`}
-            state={{ back: location.search }}
+            to={`/entry/${id}${location.search}`}
             className={`entry-card${focused ? ' entry-card--focused' : ''}`}
         >
             <h2 className="entry-card__title">{title}</h2>

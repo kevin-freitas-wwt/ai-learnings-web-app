@@ -135,9 +135,8 @@ function EntryModal() {
     }
 
     const close = useCallback( () => {
-        const back = location.state?.back
-        navigate( back ? `/${back}` : '/' )
-    }, [navigate, location.state] )
+        navigate( `/${location.search}` )
+    }, [navigate, location.search] )
 
     const handleHeart = useCallback( async () => {
         const stored = JSON.parse( localStorage.getItem( 'aih_hearts' ) || '[]' )
@@ -419,7 +418,7 @@ function EntryModal() {
                                     <button
                                         key={rel.id}
                                         className="entry-modal__related-card"
-                                        onClick={() => navigate( `/entry/${rel.id}`, { state: location.state } )}
+                                        onClick={() => navigate( `/entry/${rel.id}${location.search}` )}
                                     >
                                         <div className="entry-modal__related-card-source">
                                             <img src={relFavicon} alt="" width="12" height="12" />
