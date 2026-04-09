@@ -17,20 +17,19 @@ export async function generatePodcastScript( entries, weekStart, weekEnd ) {
         bullets: ( e.summary || [] ).slice( 0, 3 ),
     } ) )
 
-    const prompt = `You are writing a short, conversational two-host podcast script for an internal team called WWT Digital. The podcast covers the top AI learnings shared by team members this week (week of ${weekStart}–${weekEnd}).
+    const prompt = `You are writing a short, conversational single-host podcast script for an internal team called WWT Digital. The podcast covers the top AI learnings shared by team members this week (week of ${weekStart}–${weekEnd}).
 
-The two hosts are "Alex" and "Jordan" — professional but warm, like a tech podcast. host1 is Alex, host2 is Jordan.
+The host is "Alex" — professional but warm, like a tech podcast host.
 
 Rules:
-- Alex (host1) opens the show, introduces each article, and closes with a sign-off
-- Jordan (host2) gives a brief reaction or observation after each article — one or two sentences, not a summary repeat
+- Open the show, walk through each article, and close with a sign-off
 - Mention the submitter name and source domain naturally each time — vary the phrasing (e.g. "spotted on", "from", "over on", "via", "published at", "shared from")
 - Total script under 300 words
-- No filler affirmations like "absolutely", "definitely", "great point", "exactly", "totally"
+- No filler affirmations like "absolutely", "definitely", "exactly", "totally"
 - Conversational, not a press release
 
-Return ONLY a valid JSON array with no markdown fencing or other text:
-[{ "speaker": "host1" | "host2", "text": "..." }, ...]
+Return ONLY a valid JSON array of segment strings with no markdown fencing or other text:
+["...", "...", ...]
 
 Entries:
 ${JSON.stringify( entrySummaries, null, 2 )}`
@@ -60,7 +59,9 @@ ${JSON.stringify( entrySummaries, null, 2 )}`
 
     try {
         const parsed = JSON.parse( jsonMatch[0] )
-        return Array.isArray( parsed ) ? parsed : null
+        if ( !Array.isArray( parsed ) ) return null
+        // Normalise — accept either plain strings or {text} objects from the model
+        return parsed.map( ( seg ) => ( typeof seg === 'string' ? { text: seg } : { text: seg.text ?? '' } ) )
     } catch {
         return null
     }
@@ -69,21 +70,20 @@ ${JSON.stringify( entrySummaries, null, 2 )}`
 export async function generatePodcastAudio( script ) {
     if ( !process.env.ELEVENLABS_API_KEY ) return null
 
-    const host1VoiceId = process.env.ELEVENLABS_HOST1_VOICE_ID || '21m00Tcm4TlvDq8ikWAM' // Rachel
-    const host2VoiceId = process.env.ELEVENLABS_HOST2_VOICE_ID || 'ErXwobaYiN019PkySvjV' // Antoni
+    const voiceId = process.env.ELEVENLABS_HOST1_VOICE_ID || '21m00Tcm4TlvDq8ikWAM' // Rachel
+    const fullText = script.map( ( seg ) => seg.text ).join( ' ' )
 
-    const inputs = script.map( ( seg ) => ( {
-        text: seg.text,
-        voice_id: seg.speaker === 'host1' ? host1VoiceId : host2VoiceId,
-    } ) )
-
-    const response = await fetch( 'https://api.elevenlabs.io/v1/text-to-dialogue', {
+    const response = await fetch( `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
         headers: {
             'xi-api-key': process.env.ELEVENLABS_API_KEY,
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify( { inputs } ),
+        body: JSON.stringify( {
+            text: fullText,
+            model_id: 'eleven_turbo_v2',
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+        } ),
     } )
 
     if ( !response.ok ) {

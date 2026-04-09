@@ -56,8 +56,8 @@ function PodcastTest() {
         }
     }
 
-    function updateSegment( index, field, value ) {
-        setScript( ( prev ) => prev.map( ( seg, i ) => i === index ? { ...seg, [field]: value } : seg ) )
+    function updateSegment( index, value ) {
+        setScript( ( prev ) => prev.map( ( seg, i ) => i === index ? { text: value } : seg ) )
     }
 
     function removeSegment( index ) {
@@ -65,11 +65,11 @@ function PodcastTest() {
     }
 
     function addSegment() {
-        setScript( ( prev ) => [...prev, { speaker: 'host1', text: '' }] )
+        setScript( ( prev ) => [...prev, { text: '' }] )
     }
 
     async function handleCopy() {
-        const text = script.map( ( seg ) => `${seg.speaker === 'host1' ? 'Alex' : 'Jordan'}: ${seg.text}` ).join( '\n\n' )
+        const text = script.map( ( seg ) => seg.text ).join( '\n\n' )
         await navigator.clipboard.writeText( text )
         setCopied( true )
         setTimeout( () => setCopied( false ), 2000 )
@@ -119,18 +119,11 @@ function PodcastTest() {
                     <div className="podcast-test__segments">
                         {script.map( ( seg, i ) => (
                             <div key={i} className="podcast-test__segment">
-                                <button
-                                    className={`podcast-test__speaker podcast-test__speaker--${seg.speaker}`}
-                                    onClick={() => updateSegment( i, 'speaker', seg.speaker === 'host1' ? 'host2' : 'host1' )}
-                                    title="Click to toggle speaker"
-                                >
-                                    {seg.speaker === 'host1' ? 'Alex' : 'Jordan'}
-                                </button>
                                 <textarea
                                     className="podcast-test__segment-text"
                                     value={seg.text}
                                     rows={Math.max( 2, Math.ceil( seg.text.length / 72 ) )}
-                                    onChange={( e ) => updateSegment( i, 'text', e.target.value )}
+                                    onChange={( e ) => updateSegment( i, e.target.value )}
                                 />
                                 <button
                                     className="podcast-test__segment-remove"
