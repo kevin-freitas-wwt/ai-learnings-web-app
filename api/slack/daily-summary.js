@@ -64,7 +64,7 @@ export default async function handler( req, res ) {
         } ) ),
     ]
 
-    await slack.chat.postMessage( { channel, blocks, text: `📚 AI Learnings — ${dateLabel}: ${rows.length} new entries` } )
+    await slack.chat.postMessage( { channel, blocks, text: `📚 AI Learnings — ${dateLabel}: ${rows.length} new entries`, unfurl_links: false, unfurl_media: false } )
 
     return res.status( 200 ).json( { ok: true, sent: true, count: rows.length } )
 }
