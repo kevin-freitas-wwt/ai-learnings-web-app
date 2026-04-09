@@ -132,11 +132,12 @@ async function mixWithMusic( voiceBuffer, ffmpegPath, execAsync ) {
         ? `-stream_loop -1 -i "${musicUrl}"`
         : `-f lavfi -i anoisesrc=color=brown:r=44100`
 
+    // normalize=0 prevents amix from halving both inputs (default behaviour kills the quiet bg track)
     const bgFilter = musicUrl
-        ? `[1:a]volume=0.08,afade=t=in:st=0:d=2,afade=t=out:st=9999:d=3[bg]`
-        : `[1:a]lowpass=f=400,volume=0.06,afade=t=in:st=0:d=2,afade=t=out:st=9999:d=3[bg]`
+        ? `[1:a]volume=0.10,afade=t=in:st=0:d=2[bg]`
+        : `[1:a]lowpass=f=400,volume=0.12,afade=t=in:st=0:d=2[bg]`
 
-    const cmd = `"${ffmpegPath}" -i "${tmpVoice}" ${musicInput} -filter_complex "${bgFilter};[0:a][bg]amix=inputs=2:duration=first[out]" -map "[out]" -c:a libmp3lame -q:a 4 "${tmpOut}" -y`
+    const cmd = `"${ffmpegPath}" -i "${tmpVoice}" ${musicInput} -filter_complex "${bgFilter};[0:a][bg]amix=inputs=2:duration=first:normalize=0[out]" -map "[out]" -c:a libmp3lame -q:a 4 "${tmpOut}" -y`
 
     console.log( '[podcast] running ffmpeg mix' )
     try {
