@@ -65,7 +65,8 @@ function PodcastTest() {
         } )
 
         try {
-            const script = [{ text: scriptText }]
+            // Split on blank lines so SSML breaks land between each entry paragraph
+            const script = scriptText.split( /\n\n+/ ).filter( Boolean ).map( ( text ) => ( { text } ) )
             const res = await fetch( '/api/podcast', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

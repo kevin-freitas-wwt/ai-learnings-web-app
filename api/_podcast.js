@@ -19,10 +19,11 @@ export async function generatePodcastScript( entries, weekStart, weekEnd ) {
 
     const prompt = `You are writing a short, conversational single-host podcast script for an internal team called WWT Digital. The podcast covers the top AI learnings shared by team members this week (week of ${weekStart}–${weekEnd}).
 
-The host is "Alex" — professional but warm, like a tech podcast host.
+The host is "Alex" — professional but warm, like a tech podcast host. Alex doesn't say his name in the podcast though.
 
 Rules:
 - Open the show, walk through each article, and close with a sign-off
+- The sign off should mention the d-ai-learnings-hub (say the dashes) slack channel and the "AI Learnings Hub" slack app to submit links or search for what folks are posting.
 - Mention the submitter name and source domain naturally each time — vary the phrasing (e.g. "spotted on", "from", "over on", "via", "published at", "shared from")
 - Total script under 300 words
 - No filler affirmations like "absolutely", "definitely", "exactly", "totally"
@@ -69,7 +70,8 @@ ${JSON.stringify( entrySummaries, null, 2 )}`
 
 async function generateVoice( script ) {
     const voiceId = process.env.ELEVENLABS_HOST1_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'
-    const fullText = script.map( ( seg ) => seg.text ).join( ' ' )
+    // SSML <break> tags insert ~2s pauses between entries; ElevenLabs turbo_v2 supports these
+    const fullText = script.map( ( seg ) => seg.text ).join( ' <break time="2s"/> ' )
 
     const response = await fetch( `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
@@ -98,16 +100,22 @@ async function fetchMusicUrl() {
 
     try {
         const res = await fetch(
-            'https://ccmixter.org/api/query?f=json&tags=ambient&sort=random&limit=10&lic=to',
+            'https://ccmixter.org/api/query?f=json&tags=electronic,instrumental&sort=random&limit=10&lic=to',
             { signal: AbortSignal.timeout( 5000 ) }
         )
-        if ( !res.ok ) return null
-        const tracks = await res.json()
-        const track = tracks.find( ( t ) => t.download_url )
-        return track?.download_url ?? null
+        if ( res.ok ) {
+            const tracks = await res.json()
+            const track = tracks.find( ( t ) => t.download_url )
+            if ( track?.download_url ) return track.download_url
+        }
     } catch {
-        return null
+        // fall through to bundled track
     }
+
+    // Bundled royalty-free fallback (api/_music/background.mp3, relative to this file)
+    // fileURLToPath decodes %20 etc. so the shell path has real spaces
+    const { fileURLToPath } = await import( 'url' )
+    return fileURLToPath( new URL( './_music/background.mp3', import.meta.url ) )
 }
 
 async function mixWithMusic( voiceBuffer, ffmpegPath, execAsync ) {
@@ -127,17 +135,14 @@ async function mixWithMusic( voiceBuffer, ffmpegPath, execAsync ) {
 
     await writeFile( tmpVoice, voiceBuffer )
 
-    // lavfi anoisesrc: source params only in -i, filters (lowpass/volume) go in filter_complex
-    const musicInput = musicUrl
-        ? `-stream_loop -1 -i "${musicUrl}"`
-        : `-f lavfi -i anoisesrc=color=brown:r=44100`
+    // normalize=0 prevents amix from halving both inputs (default kills quiet bg track)
+    // adelay=2000  — 2s music intro before voice starts
+    // apad=pad_dur=3 — 3s silence appended to voice so music continues after speech ends
+    // areverse,afade=t=in:d=2,areverse — fades out the last 2s without needing to know total duration
+    const musicInput = `-stream_loop -1 -i "${musicUrl}"`
+    const filterComplex = `[0:a]adelay=2000|2000,apad=pad_dur=3[v];[1:a]volume=0.10,afade=t=in:st=0:d=2[bg];[v][bg]amix=inputs=2:duration=first:normalize=0[mixed];[mixed]areverse,afade=t=in:st=0:d=2,areverse[out]`
 
-    // normalize=0 prevents amix from halving both inputs (default behaviour kills the quiet bg track)
-    const bgFilter = musicUrl
-        ? `[1:a]volume=0.10,afade=t=in:st=0:d=2[bg]`
-        : `[1:a]lowpass=f=400,volume=0.12,afade=t=in:st=0:d=2[bg]`
-
-    const cmd = `"${ffmpegPath}" -i "${tmpVoice}" ${musicInput} -filter_complex "${bgFilter};[0:a][bg]amix=inputs=2:duration=first:normalize=0[out]" -map "[out]" -c:a libmp3lame -q:a 4 "${tmpOut}" -y`
+    const cmd = `"${ffmpegPath}" -i "${tmpVoice}" ${musicInput} -filter_complex "${filterComplex}" -map "[out]" -c:a libmp3lame -q:a 4 "${tmpOut}" -y`
 
     console.log( '[podcast] running ffmpeg mix' )
     try {
