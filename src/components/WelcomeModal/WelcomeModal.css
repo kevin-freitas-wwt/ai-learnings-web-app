@@ -1,0 +1,96 @@
+.welcome-modal__backdrop {
+    align-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    left: 0;
+    padding: 24px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 300;
+}
+
+.welcome-modal {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    max-width: 400px;
+    padding: 32px;
+    width: 100%;
+}
+
+.welcome-modal__title {
+    color: var(--text-h);
+    font-family: var(--heading);
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    margin: 0 0 8px;
+}
+
+.welcome-modal__desc {
+    color: var(--text);
+    font-size: 14px;
+    line-height: 150%;
+    margin: 0 0 24px;
+    opacity: 0.65;
+}
+
+.welcome-modal__form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.welcome-modal__fields {
+    display: flex;
+    gap: 10px;
+}
+
+.welcome-modal__input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    flex: 1;
+    font-family: var(--sans);
+    font-size: 14px;
+    min-width: 0;
+    outline: none;
+    padding: 9px 12px;
+    transition: border-color 0.15s;
+}
+
+.welcome-modal__input:focus {
+    border-color: var(--accent-border);
+}
+
+.welcome-modal__input::placeholder {
+    color: var(--text);
+    opacity: 0.35;
+}
+
+.welcome-modal__submit {
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: var(--bg);
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 20px;
+    transition: opacity 0.15s;
+}
+
+.welcome-modal__submit:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.welcome-modal__submit:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
