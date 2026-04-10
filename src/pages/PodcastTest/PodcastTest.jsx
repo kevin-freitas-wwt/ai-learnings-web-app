@@ -18,6 +18,7 @@ function PodcastTest() {
     const [musicPreviewSource, setMusicPreviewSource] = useState( null )
     const [musicPreviewLoading, setMusicPreviewLoading] = useState( false )
     const [musicPreviewError, setMusicPreviewError] = useState( null )
+    const [musicTrackName, setMusicTrackName] = useState( null )
     const prevAudioUrl = useRef( null )
     const stepTimers = useRef( [] )
     const scriptRef = useRef( null )
@@ -109,12 +110,14 @@ function PodcastTest() {
         setMusicPreviewUrl( null )
         setMusicPreviewSource( null )
         setMusicPreviewError( null )
+        setMusicTrackName( null )
         try {
             const res = await fetch( '/api/podcast?preview=music' )
             const data = await res.json()
             setMusicPreviewUrl( data.url || null )
             setMusicPreviewSource( data.source )
             setMusicPreviewError( data.jamendoError || null )
+            setMusicTrackName( data.trackName || null )
         } catch {
             setMusicPreviewSource( 'error' )
         } finally {
@@ -229,7 +232,11 @@ function PodcastTest() {
                 <div className="podcast-test__section-header">
                     <div>
                         <h2 className="podcast-test__section-title">Backing Track</h2>
-                        {musicPreviewSource === 'jamendo' && <span className="podcast-test__hint">Sourced from Jamendo</span>}
+                        {musicPreviewSource === 'jamendo' && (
+                            <span className="podcast-test__hint">
+                                {musicTrackName ? musicTrackName : 'Sourced from Jamendo'}
+                            </span>
+                        )}
                         {musicPreviewSource === 'custom' && <span className="podcast-test__hint">Using PODCAST_MUSIC_URL override</span>}
                         {musicPreviewSource === 'bundled' && <span className="podcast-test__hint">Using bundled track</span>}
                         {musicPreviewError && <span className="podcast-test__hint podcast-test__hint--warn">Jamendo: {musicPreviewError}</span>}

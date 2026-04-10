@@ -18,7 +18,7 @@ export default async function handler( req, res ) {
 
     if ( req.method === 'GET' && req.query.preview === 'music' ) {
         try {
-            const { url, jamendoError } = await fetchMusicUrl()
+            const { url, trackName, jamendoError } = await fetchMusicUrl()
             const isExternal = url?.startsWith( 'http' )
             const source = !isExternal ? 'bundled'
                 : process.env.PODCAST_MUSIC_URL ? 'custom'
@@ -26,6 +26,7 @@ export default async function handler( req, res ) {
             return res.status( 200 ).json( {
                 url: isExternal ? url : '/api/podcast?preview=music-file',
                 source,
+                trackName: trackName || null,
                 jamendoError: jamendoError || null,
             } )
         } catch {

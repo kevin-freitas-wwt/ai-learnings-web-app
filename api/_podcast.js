@@ -150,7 +150,7 @@ export async function fetchMusicUrl() {
                 const track = withAudio[ Math.floor( Math.random() * withAudio.length ) ]
                 if ( track?.audio ) {
                     console.log( `[podcast] Jamendo track (tags: ${tags}):`, track.name, '—', track.artist_name )
-                    return { url: track.audio }
+                    return { url: track.audio, trackName: `${track.name} — ${track.artist_name}` }
                 }
                 const msg = `no results for tags "${tags}"`
                 errors.push( msg )
