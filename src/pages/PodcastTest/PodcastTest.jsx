@@ -187,11 +187,20 @@ function PodcastTest() {
                 )}
 
                 {audioUrl && (
-                    <audio
-                        className="podcast-test__player"
-                        controls
-                        src={audioUrl}
-                    />
+                    <>
+                        <audio
+                            className="podcast-test__player"
+                            controls
+                            src={audioUrl}
+                        />
+                        <a
+                            className="podcast-test__btn podcast-test__btn--secondary podcast-test__download"
+                            href={audioUrl}
+                            download={`AI Learnings Hub${weekLabel ? ` for ${weekLabel}` : ''}.mp3`}
+                        >
+                            Save MP3
+                        </a>
+                    </>
                 )}
 
                 {audioUsage && (

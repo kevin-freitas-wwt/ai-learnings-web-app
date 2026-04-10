@@ -142,6 +142,12 @@
     width: 100%;
 }
 
+.podcast-test__download {
+    display: inline-block;
+    margin-top: 10px;
+    text-decoration: none;
+}
+
 .podcast-test__usage {
     color: var(--text);
     font-size: 12px;
