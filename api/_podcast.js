@@ -147,11 +147,11 @@ async function mixWithMusic( voiceBuffer, ffmpegPath, execAsync ) {
     await writeFile( tmpVoice, voiceBuffer )
 
     // normalize=0 prevents amix from halving both inputs (default kills quiet bg track)
-    // adelay=2000  — 2s music intro before voice starts
+    // adelay=4000  — 4s music intro before voice starts
     // apad=pad_dur=3 — 3s silence appended to voice so music continues after speech ends
     // areverse,afade=t=in:d=2,areverse — fades out the last 2s without needing to know total duration
     const musicInput = `-stream_loop -1 -i "${musicUrl}"`
-    const filterComplex = `[0:a]adelay=2000|2000,apad=pad_dur=3[v];[1:a]volume=0.10,afade=t=in:st=0:d=2[bg];[v][bg]amix=inputs=2:duration=first:normalize=0[mixed];[mixed]areverse,afade=t=in:st=0:d=2,areverse[out]`
+    const filterComplex = `[0:a]adelay=4000|4000,apad=pad_dur=3[v];[1:a]volume=0.06,afade=t=in:st=0:d=4[bg];[v][bg]amix=inputs=2:duration=first:normalize=0[mixed];[mixed]areverse,afade=t=in:st=0:d=2,areverse[out]`
 
     const cmd = `"${ffmpegPath}" -i "${tmpVoice}" ${musicInput} -filter_complex "${filterComplex}" -map "[out]" -c:a libmp3lame -q:a 4 "${tmpOut}" -y`
 
