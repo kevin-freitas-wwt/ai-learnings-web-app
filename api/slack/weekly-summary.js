@@ -112,11 +112,15 @@ export default async function handler( req, res ) {
         if ( !audioBuffer ) throw new Error( 'No audio generated' )
         if ( usage ) console.log( `[podcast] ElevenLabs usage: ${usage.used} / ${usage.limit}` )
 
-        const dateSlug = weekStart.toLowerCase().replace( /\s/g, '-' )
+        const now = new Date()
+        const month = now.toLocaleDateString( 'en-US', { month: 'long', timeZone: 'UTC' } ).toLowerCase()
+        const day = now.toLocaleDateString( 'en-US', { day: '2-digit', timeZone: 'UTC' } )
+        const year = now.toLocaleDateString( 'en-US', { year: 'numeric', timeZone: 'UTC' } )
+        const dateSlug = `${month}-${day}-${year}`
         await slack.files.uploadV2( {
             channel_id: channel,
             thread_ts: msgResult.ts,
-            filename: `ai-learnings-${dateSlug}.mp3`,
+            filename: `ai-learnings-hub-${dateSlug}.mp3`,
             file: audioBuffer,
             title: `🎙️ AI Learnings Podcast — Week of ${weekStart}–${weekEnd}`,
         } )
