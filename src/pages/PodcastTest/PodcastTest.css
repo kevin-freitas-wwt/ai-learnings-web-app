@@ -141,3 +141,10 @@
     margin-top: 4px;
     width: 100%;
 }
+
+.podcast-test__usage {
+    color: var(--text);
+    font-size: 12px;
+    margin: 10px 0 0;
+    opacity: 0.5;
+}

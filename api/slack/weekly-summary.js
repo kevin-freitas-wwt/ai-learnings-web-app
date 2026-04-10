@@ -108,8 +108,9 @@ export default async function handler( req, res ) {
         const script = await generatePodcastScript( top5, weekStart, weekEnd )
         if ( !script?.length ) throw new Error( 'No script generated' )
 
-        const audioBuffer = await generatePodcastAudio( script )
+        const { audio: audioBuffer, usage } = await generatePodcastAudio( script ) ?? {}
         if ( !audioBuffer ) throw new Error( 'No audio generated' )
+        if ( usage ) console.log( `[podcast] ElevenLabs usage: ${usage.used} / ${usage.limit}` )
 
         const dateSlug = weekStart.toLowerCase().replace( /\s/g, '-' )
         await slack.files.uploadV2( {

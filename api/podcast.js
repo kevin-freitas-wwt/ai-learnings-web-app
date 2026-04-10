@@ -43,14 +43,25 @@ export default async function handler( req, res ) {
             return res.status( 400 ).json( { error: 'Invalid script' } )
         }
 
-        const audioBuffer = await generatePodcastAudio( script )
-        if ( !audioBuffer ) {
+        let result
+        try {
+            result = await generatePodcastAudio( script )
+        } catch ( err ) {
+            return res.status( 500 ).json( { error: err.message } )
+        }
+        if ( !result?.audio ) {
             return res.status( 500 ).json( { error: 'Audio generation failed — check ELEVENLABS_API_KEY' } )
         }
 
+        const { audio, usage } = result
         res.setHeader( 'Content-Type', 'audio/mpeg' )
-        res.setHeader( 'Content-Length', audioBuffer.length )
-        return res.end( audioBuffer )
+        res.setHeader( 'Content-Length', audio.length )
+        if ( usage ) {
+            res.setHeader( 'X-ElevenLabs-Characters-Used', usage.used )
+            res.setHeader( 'X-ElevenLabs-Characters-Limit', usage.limit )
+            if ( usage.resetAt ) res.setHeader( 'X-ElevenLabs-Reset-Unix', usage.resetAt )
+        }
+        return res.end( audio )
     }
 
     res.status( 405 ).end()

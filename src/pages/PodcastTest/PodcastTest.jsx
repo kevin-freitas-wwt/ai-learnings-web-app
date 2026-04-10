@@ -12,6 +12,7 @@ function PodcastTest() {
     const [audioLoading, setAudioLoading] = useState( false )
     const [audioStep, setAudioStep] = useState( '' )
     const [audioError, setAudioError] = useState( null )
+    const [audioUsage, setAudioUsage] = useState( null )
     const prevAudioUrl = useRef( null )
     const stepTimers = useRef( [] )
     const scriptRef = useRef( null )
@@ -50,6 +51,7 @@ function PodcastTest() {
         setAudioLoading( true )
         setAudioError( null )
         setAudioUrl( null )
+        setAudioUsage( null )
         if ( prevAudioUrl.current ) URL.revokeObjectURL( prevAudioUrl.current )
 
         // Show timed steps that match the real server pipeline
@@ -75,6 +77,15 @@ function PodcastTest() {
             if ( !res.ok ) {
                 const err = await res.json().catch( () => ( {} ) )
                 throw new Error( err.error || `Server error ${res.status}` )
+            }
+            const used = res.headers.get( 'x-elevenlabs-characters-used' )
+            const limit = res.headers.get( 'x-elevenlabs-characters-limit' )
+            const resetUnix = res.headers.get( 'x-elevenlabs-reset-unix' )
+            if ( used && limit ) {
+                const resetDate = resetUnix
+                    ? new Date( Number( resetUnix ) * 1000 ).toLocaleDateString( 'en-US', { month: 'long', day: 'numeric' } )
+                    : null
+                setAudioUsage( { used: Number( used ), limit: Number( limit ), resetDate } )
             }
             const blob = await res.blob()
             const url = URL.createObjectURL( blob )
@@ -181,6 +192,13 @@ function PodcastTest() {
                         controls
                         src={audioUrl}
                     />
+                )}
+
+                {audioUsage && (
+                    <p className="podcast-test__usage">
+                        ElevenLabs: {audioUsage.used.toLocaleString()} / {audioUsage.limit.toLocaleString()} characters used
+                        {audioUsage.resetDate && ` — resets ${audioUsage.resetDate}`}
+                    </p>
                 )}
             </section>
         </div>

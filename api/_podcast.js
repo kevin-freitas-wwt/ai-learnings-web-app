@@ -87,9 +87,17 @@ async function generateVoice( script ) {
     } )
 
     if ( !response.ok ) {
-        const err = await response.text()
-        console.error( '[podcast] ElevenLabs error:', response.status, err )
-        return null
+        let hint = ''
+        try {
+            const body = await response.json()
+            const status = body?.detail?.status
+            if ( status === 'quota_exceeded' ) hint = 'monthly character quota exceeded'
+            else if ( status === 'invalid_api_key' ) hint = 'invalid API key'
+            else if ( body?.detail?.message ) hint = body.detail.message
+        } catch { /* ignore parse errors */ }
+        const label = hint ? `: ${hint}` : ''
+        console.error( '[podcast] ElevenLabs error:', response.status, hint )
+        throw new Error( `ElevenLabs ${response.status}${label}` )
     }
 
     return Buffer.from( await response.arrayBuffer() )
@@ -164,10 +172,27 @@ export async function generatePodcastAudio( script ) {
     const voiceBuffer = await generateVoice( script )
     if ( !voiceBuffer ) return null
 
+    // Fetch usage info after voice generation so it reflects the just-used characters
+    let usage = null
+    try {
+        const subRes = await fetch( 'https://api.elevenlabs.io/v1/user/subscription', {
+            headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY },
+        } )
+        if ( subRes.ok ) {
+            const sub = await subRes.json()
+            usage = {
+                used: sub.character_count,
+                limit: sub.character_limit,
+                resetAt: sub.next_character_count_reset_unix,
+            }
+        }
+    } catch { /* non-fatal — audio still returns */ }
+
     const { exec } = await import( 'child_process' )
     const { promisify } = await import( 'util' )
     const { default: ffmpegPath } = await import( 'ffmpeg-static' )
     const execAsync = promisify( exec )
 
-    return mixWithMusic( voiceBuffer, ffmpegPath, execAsync )
+    const audio = await mixWithMusic( voiceBuffer, ffmpegPath, execAsync )
+    return { audio, usage }
 }
