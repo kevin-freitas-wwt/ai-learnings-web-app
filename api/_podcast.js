@@ -106,27 +106,70 @@ async function generateVoice( script ) {
     return Buffer.from( await response.arrayBuffer() )
 }
 
+// Returns { url, jamendoError } — jamendoError is set when Jamendo failed and bundled track is used
 export async function fetchMusicUrl() {
-    if ( process.env.PODCAST_MUSIC_URL ) return process.env.PODCAST_MUSIC_URL
+    if ( process.env.PODCAST_MUSIC_URL ) return { url: process.env.PODCAST_MUSIC_URL }
 
-    try {
-        const res = await fetch(
-            'https://ccmixter.org/api/query?f=json&tags=electronic,instrumental&sort=random&limit=10&lic=to',
-            { signal: AbortSignal.timeout( 5000 ) }
-        )
-        if ( res.ok ) {
-            const tracks = await res.json()
-            const track = tracks.find( ( t ) => t.download_url )
-            if ( track?.download_url ) return track.download_url
+    if ( process.env.JAMENDO_CLIENT_ID ) {
+        const tagSets = [
+            'background+news+modern+instrumental',
+            'background+news+modern',
+            'background+news',
+            'background',
+        ]
+        const errors = []
+        for ( const tags of tagSets ) {
+            try {
+                const params = new URLSearchParams( {
+                    client_id: process.env.JAMENDO_CLIENT_ID,
+                    format: 'json',
+                    limit: '50',
+                    tags,
+                    audioformat: 'mp32',
+                    order: 'popularity_month',
+                    include: 'musicinfo',
+                } )
+                const res = await fetch(
+                    `https://api.jamendo.com/v3.0/tracks/?${params}`,
+                    { signal: AbortSignal.timeout( 5000 ) }
+                )
+                if ( !res.ok ) {
+                    const msg = `HTTP ${res.status} for tags "${tags}"`
+                    errors.push( msg )
+                    console.warn( `[podcast] Jamendo: ${msg}` )
+                    continue
+                }
+                const data = await res.json()
+                if ( data.headers?.code && data.headers.code !== 0 ) {
+                    const msg = `API error ${data.headers.code}: ${data.headers.error_message || 'unknown'} for tags "${tags}"`
+                    errors.push( msg )
+                    console.warn( `[podcast] Jamendo: ${msg}` )
+                    continue
+                }
+                const withAudio = data.results?.filter( ( t ) => t.audio ) ?? []
+                const track = withAudio[ Math.floor( Math.random() * withAudio.length ) ]
+                if ( track?.audio ) {
+                    console.log( `[podcast] Jamendo track (tags: ${tags}):`, track.name, '—', track.artist_name )
+                    return { url: track.audio }
+                }
+                const msg = `no results for tags "${tags}"`
+                errors.push( msg )
+                console.log( `[podcast] Jamendo: ${msg}, trying fewer…` )
+            } catch ( err ) {
+                const msg = `fetch failed for tags "${tags}": ${err.message}`
+                errors.push( msg )
+                console.warn( `[podcast] Jamendo: ${msg}` )
+            }
         }
-    } catch {
-        // fall through to bundled track
+        const jamendoError = errors.join( '; ' )
+        const { fileURLToPath } = await import( 'url' )
+        return { url: fileURLToPath( new URL( './_music/background.mp3', import.meta.url ) ), jamendoError }
     }
 
-    // Bundled royalty-free fallback (api/_music/background.mp3, relative to this file)
+    // Bundled royalty-free track (api/_music/background.mp3)
     // fileURLToPath decodes %20 etc. so the shell path has real spaces
     const { fileURLToPath } = await import( 'url' )
-    return fileURLToPath( new URL( './_music/background.mp3', import.meta.url ) )
+    return { url: fileURLToPath( new URL( './_music/background.mp3', import.meta.url ) ) }
 }
 
 async function mixWithMusic( voiceBuffer, ffmpegPath, execAsync ) {
@@ -137,8 +180,9 @@ async function mixWithMusic( voiceBuffer, ffmpegPath, execAsync ) {
 
     const { writeFile, readFile, unlink } = await import( 'fs/promises' )
 
-    const musicUrl = await fetchMusicUrl()
-    console.log( '[podcast] music url:', musicUrl || 'none — using brown noise fallback' )
+    const { url: musicUrl, jamendoError } = await fetchMusicUrl()
+    if ( jamendoError ) console.warn( '[podcast] Jamendo failed, using bundled track. Errors:', jamendoError )
+    console.log( '[podcast] music url:', musicUrl )
 
     const ts = Date.now()
     const tmpVoice = `/tmp/podcast-voice-${ts}.mp3`

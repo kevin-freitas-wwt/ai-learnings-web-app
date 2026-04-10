@@ -148,6 +148,11 @@
     text-decoration: none;
 }
 
+.podcast-test__hint--warn {
+    color: #b43232;
+    opacity: 1;
+}
+
 .podcast-test__usage {
     color: var(--text);
     font-size: 12px;

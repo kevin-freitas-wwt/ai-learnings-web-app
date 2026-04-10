@@ -2,11 +2,32 @@ import { neon } from '@neondatabase/serverless'
 import { generatePodcastScript, generatePodcastAudio, fetchMusicUrl } from './_podcast.js'
 
 export default async function handler( req, res ) {
+    if ( req.method === 'GET' && req.query.preview === 'music-file' ) {
+        const { readFile } = await import( 'fs/promises' )
+        const { fileURLToPath } = await import( 'url' )
+        try {
+            const filePath = fileURLToPath( new URL( './_music/background.mp3', import.meta.url ) )
+            const data = await readFile( filePath )
+            res.setHeader( 'Content-Type', 'audio/mpeg' )
+            res.setHeader( 'Content-Length', data.length )
+            return res.end( data )
+        } catch ( err ) {
+            return res.status( 500 ).json( { error: 'Could not read bundled music file' } )
+        }
+    }
+
     if ( req.method === 'GET' && req.query.preview === 'music' ) {
         try {
-            const url = await fetchMusicUrl()
-            const source = url?.startsWith( 'http' ) ? 'ccmixter' : 'bundled'
-            return res.status( 200 ).json( { url: source === 'ccmixter' ? url : null, source } )
+            const { url, jamendoError } = await fetchMusicUrl()
+            const isExternal = url?.startsWith( 'http' )
+            const source = !isExternal ? 'bundled'
+                : process.env.PODCAST_MUSIC_URL ? 'custom'
+                : 'jamendo'
+            return res.status( 200 ).json( {
+                url: isExternal ? url : '/api/podcast?preview=music-file',
+                source,
+                jamendoError: jamendoError || null,
+            } )
         } catch {
             return res.status( 200 ).json( { url: null, source: 'error' } )
         }

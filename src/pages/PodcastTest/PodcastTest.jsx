@@ -17,6 +17,7 @@ function PodcastTest() {
     const [musicPreviewUrl, setMusicPreviewUrl] = useState( null )
     const [musicPreviewSource, setMusicPreviewSource] = useState( null )
     const [musicPreviewLoading, setMusicPreviewLoading] = useState( false )
+    const [musicPreviewError, setMusicPreviewError] = useState( null )
     const prevAudioUrl = useRef( null )
     const stepTimers = useRef( [] )
     const scriptRef = useRef( null )
@@ -107,11 +108,13 @@ function PodcastTest() {
         setMusicPreviewLoading( true )
         setMusicPreviewUrl( null )
         setMusicPreviewSource( null )
+        setMusicPreviewError( null )
         try {
             const res = await fetch( '/api/podcast?preview=music' )
             const data = await res.json()
             setMusicPreviewUrl( data.url || null )
             setMusicPreviewSource( data.source )
+            setMusicPreviewError( data.jamendoError || null )
         } catch {
             setMusicPreviewSource( 'error' )
         } finally {
@@ -226,9 +229,11 @@ function PodcastTest() {
                 <div className="podcast-test__section-header">
                     <div>
                         <h2 className="podcast-test__section-title">Backing Track</h2>
-                        {musicPreviewSource === 'ccmixter' && <span className="podcast-test__hint">Sourced from ccMixter</span>}
-                        {musicPreviewSource === 'bundled' && <span className="podcast-test__hint">Using bundled fallback — ccMixter unreachable</span>}
-                        {musicPreviewSource === 'error' && <span className="podcast-test__hint">Could not fetch track</span>}
+                        {musicPreviewSource === 'jamendo' && <span className="podcast-test__hint">Sourced from Jamendo</span>}
+                        {musicPreviewSource === 'custom' && <span className="podcast-test__hint">Using PODCAST_MUSIC_URL override</span>}
+                        {musicPreviewSource === 'bundled' && <span className="podcast-test__hint">Using bundled track</span>}
+                        {musicPreviewError && <span className="podcast-test__hint podcast-test__hint--warn">Jamendo: {musicPreviewError}</span>}
+                        {musicPreviewSource === 'error' && <span className="podcast-test__hint">Could not load track</span>}
                     </div>
                     <button
                         className="podcast-test__btn podcast-test__btn--secondary"
@@ -239,14 +244,18 @@ function PodcastTest() {
                     </button>
                 </div>
 
-                {!musicPreviewUrl && !musicPreviewLoading && !musicPreviewSource && (
+                {!musicPreviewSource && !musicPreviewLoading && (
                     <div className="podcast-test__empty">
                         Preview the background music track that will be used in generated audio.
                     </div>
                 )}
 
-                {musicPreviewUrl && (
-                    <audio className="podcast-test__player" controls src={musicPreviewUrl} />
+                {( musicPreviewSource || musicPreviewLoading ) && (
+                    <audio
+                        className="podcast-test__player"
+                        controls
+                        src={musicPreviewUrl || ''}
+                    />
                 )}
             </section>
         </div>
