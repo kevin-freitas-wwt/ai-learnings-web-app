@@ -13,6 +13,10 @@ function PodcastTest() {
     const [audioStep, setAudioStep] = useState( '' )
     const [audioError, setAudioError] = useState( null )
     const [audioUsage, setAudioUsage] = useState( null )
+
+    const [musicPreviewUrl, setMusicPreviewUrl] = useState( null )
+    const [musicPreviewSource, setMusicPreviewSource] = useState( null )
+    const [musicPreviewLoading, setMusicPreviewLoading] = useState( false )
     const prevAudioUrl = useRef( null )
     const stepTimers = useRef( [] )
     const scriptRef = useRef( null )
@@ -51,7 +55,6 @@ function PodcastTest() {
         setAudioLoading( true )
         setAudioError( null )
         setAudioUrl( null )
-        setAudioUsage( null )
         if ( prevAudioUrl.current ) URL.revokeObjectURL( prevAudioUrl.current )
 
         // Show timed steps that match the real server pipeline
@@ -100,6 +103,22 @@ function PodcastTest() {
         }
     }
 
+    async function handleMusicPreview() {
+        setMusicPreviewLoading( true )
+        setMusicPreviewUrl( null )
+        setMusicPreviewSource( null )
+        try {
+            const res = await fetch( '/api/podcast?preview=music' )
+            const data = await res.json()
+            setMusicPreviewUrl( data.url || null )
+            setMusicPreviewSource( data.source )
+        } catch {
+            setMusicPreviewSource( 'error' )
+        } finally {
+            setMusicPreviewLoading( false )
+        }
+    }
+
     async function handleCopy() {
         await navigator.clipboard.writeText( scriptText )
         setCopied( true )
@@ -140,22 +159,14 @@ function PodcastTest() {
 
                 {scriptError && <p className="podcast-test__error">{scriptError}</p>}
 
-                {!scriptText && !scriptLoading && !scriptError && (
-                    <div className="podcast-test__empty">
-                        Script will appear here. Click Generate Script to pull the top 5 entries from the last 7 days.
-                    </div>
-                )}
-
-                {( scriptText || scriptLoading ) && (
-                    <textarea
-                        ref={scriptRef}
-                        className="podcast-test__script"
-                        value={scriptText}
-                        onChange={( e ) => setScriptText( e.target.value )}
-                        placeholder="Generating…"
-                        disabled={scriptLoading}
-                    />
-                )}
+                <textarea
+                    ref={scriptRef}
+                    className="podcast-test__script"
+                    value={scriptText}
+                    onChange={( e ) => setScriptText( e.target.value )}
+                    placeholder="Paste or generate a script…"
+                    disabled={scriptLoading}
+                />
             </section>
 
             <section className="podcast-test__section">
@@ -208,6 +219,34 @@ function PodcastTest() {
                         ElevenLabs: {audioUsage.used.toLocaleString()} / {audioUsage.limit.toLocaleString()} characters used
                         {audioUsage.resetDate && ` — resets ${audioUsage.resetDate}`}
                     </p>
+                )}
+            </section>
+
+            <section className="podcast-test__section">
+                <div className="podcast-test__section-header">
+                    <div>
+                        <h2 className="podcast-test__section-title">Backing Track</h2>
+                        {musicPreviewSource === 'ccmixter' && <span className="podcast-test__hint">Sourced from ccMixter</span>}
+                        {musicPreviewSource === 'bundled' && <span className="podcast-test__hint">Using bundled fallback — ccMixter unreachable</span>}
+                        {musicPreviewSource === 'error' && <span className="podcast-test__hint">Could not fetch track</span>}
+                    </div>
+                    <button
+                        className="podcast-test__btn podcast-test__btn--secondary"
+                        onClick={handleMusicPreview}
+                        disabled={musicPreviewLoading}
+                    >
+                        {musicPreviewLoading ? 'Fetching…' : 'Preview Backing Track'}
+                    </button>
+                </div>
+
+                {!musicPreviewUrl && !musicPreviewLoading && !musicPreviewSource && (
+                    <div className="podcast-test__empty">
+                        Preview the background music track that will be used in generated audio.
+                    </div>
+                )}
+
+                {musicPreviewUrl && (
+                    <audio className="podcast-test__player" controls src={musicPreviewUrl} />
                 )}
             </section>
         </div>

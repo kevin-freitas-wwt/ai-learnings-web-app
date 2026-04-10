@@ -13,7 +13,6 @@ export async function generatePodcastScript( entries, weekStart, weekEnd ) {
         rank: i + 1,
         title: e.title,
         domain: getDomain( e.url ),
-        submitter: e.submitter_name || 'a teammate',
         bullets: ( e.summary || [] ).slice( 0, 3 ),
     } ) )
 
@@ -24,7 +23,8 @@ The host is "Alex" — professional but warm, like a tech podcast host. Alex doe
 Rules:
 - Open the show, walk through each article, and close with a sign-off
 - The sign off should mention the d-ai-learnings-hub (say the dashes aloud) slack channel and the "AI Learnings Hub" slack app to submit links or search for what folks are posting.
-- Mention the submitter name and source domain naturally each time — vary the phrasing (e.g. "spotted on", "from", "over on", "via", "published at", "shared from")
+- Mention the source domain naturally each time — vary the phrasing (e.g. "spotted on", "from", "over on", "via", "published at", "shared from")
+- Do not mention individual submitter names — attribute links collectively to "colleagues on the digital team" or similar
 - Total script under 300 words
 - No filler affirmations like "absolutely", "definitely", "exactly", "totally"
 - Conversational, not a press release
@@ -106,7 +106,7 @@ async function generateVoice( script ) {
     return Buffer.from( await response.arrayBuffer() )
 }
 
-async function fetchMusicUrl() {
+export async function fetchMusicUrl() {
     if ( process.env.PODCAST_MUSIC_URL ) return process.env.PODCAST_MUSIC_URL
 
     try {

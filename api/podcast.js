@@ -1,7 +1,17 @@
 import { neon } from '@neondatabase/serverless'
-import { generatePodcastScript, generatePodcastAudio } from './_podcast.js'
+import { generatePodcastScript, generatePodcastAudio, fetchMusicUrl } from './_podcast.js'
 
 export default async function handler( req, res ) {
+    if ( req.method === 'GET' && req.query.preview === 'music' ) {
+        try {
+            const url = await fetchMusicUrl()
+            const source = url?.startsWith( 'http' ) ? 'ccmixter' : 'bundled'
+            return res.status( 200 ).json( { url: source === 'ccmixter' ? url : null, source } )
+        } catch {
+            return res.status( 200 ).json( { url: null, source: 'error' } )
+        }
+    }
+
     if ( req.method === 'GET' ) {
         const sql = neon( process.env.POSTGRES_URL )
 
