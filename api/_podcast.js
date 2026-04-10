@@ -23,7 +23,7 @@ The host is "Alex" — professional but warm, like a tech podcast host. Alex doe
 
 Rules:
 - Open the show, walk through each article, and close with a sign-off
-- The sign off should mention the d-ai-learnings-hub (say the dashes) slack channel and the "AI Learnings Hub" slack app to submit links or search for what folks are posting.
+- The sign off should mention the d-ai-learnings-hub (say the dashes aloud) slack channel and the "AI Learnings Hub" slack app to submit links or search for what folks are posting.
 - Mention the submitter name and source domain naturally each time — vary the phrasing (e.g. "spotted on", "from", "over on", "via", "published at", "shared from")
 - Total script under 300 words
 - No filler affirmations like "absolutely", "definitely", "exactly", "totally"
@@ -71,7 +71,10 @@ ${JSON.stringify( entrySummaries, null, 2 )}`
 async function generateVoice( script ) {
     const voiceId = process.env.ELEVENLABS_HOST1_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'
     // SSML <break> tags insert ~2s pauses between entries; ElevenLabs turbo_v2 supports these
-    const fullText = script.map( ( seg ) => seg.text ).join( ' <break time="2s"/> ' )
+    // Replace the channel name with a phonetic version so TTS says the dashes aloud
+    const fullText = script
+        .map( ( seg ) => seg.text.replace( /d-ai-learnings-hub/gi, 'd dash ai dash learnings dash hub' ) )
+        .join( ' <break time="2s"/> ' )
 
     const response = await fetch( `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
