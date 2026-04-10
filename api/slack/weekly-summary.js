@@ -52,7 +52,16 @@ export default async function handler( req, res ) {
 
     const sql = getDb()
     const slack = new WebClient( process.env.SLACK_BOT_TOKEN )
-    const channel = process.env.SLACK_CHANNEL_ID
+
+    // ?dm=1 (or dm=USERID) sends to your DM instead of the team channel — for testing
+    const dmParam = req.query.dm
+    const dmUserId = dmParam === '1' ? process.env.SLACK_TEST_USER_ID : ( dmParam || null )
+    let channel = process.env.SLACK_CHANNEL_ID
+    if ( dmUserId ) {
+        const dmRes = await slack.conversations.open( { users: dmUserId } )
+        channel = dmRes.channel?.id || channel
+    }
+
     const userMap = await buildSlackUserMap( slack )
 
     // Last 7 days
