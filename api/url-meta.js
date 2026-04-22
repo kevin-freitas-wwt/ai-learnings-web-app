@@ -1,4 +1,21 @@
+import { put } from '@vercel/blob'
 import { generateBullets, isYouTubeUrl } from './_bullets.js'
+
+async function uploadImageToBlob( imageUrl ) {
+    try {
+        const res = await fetch( imageUrl, { signal: AbortSignal.timeout( 6000 ) } )
+        if ( !res.ok ) return null
+        const contentType = res.headers.get( 'content-type' ) || 'image/jpeg'
+        if ( !contentType.startsWith( 'image/' ) ) return null
+        const buffer = await res.arrayBuffer()
+        const ext = contentType.split( '/' )[1]?.split( ';' )[0] || 'jpg'
+        const filename = `og-images/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const blob = await put( filename, buffer, { access: 'public', contentType } )
+        return blob.url
+    } catch {
+        return null
+    }
+}
 
 function cleanTitle( str ) {
     if ( !str ) return str
@@ -92,6 +109,7 @@ export default async function handler( req, res ) {
                 const m = html.match( pattern )
                 if ( m?.[1]?.startsWith( 'http' ) ) { og_image = m[1]; break }
             }
+            if ( og_image ) og_image = await uploadImageToBlob( og_image ) || og_image
 
             return res.status( 200 ).json( { title, published_at, og_image } )
         } catch {
