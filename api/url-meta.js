@@ -81,7 +81,19 @@ export default async function handler( req, res ) {
             const title = titleMatch ? cleanTitle( decodeHtmlEntities( titleMatch[1].trim().replace( /\s+/g, ' ' ) ) ) : null
             const published_at = extractPublishedAt( html )
 
-            return res.status( 200 ).json( { title, published_at } )
+            const ogImagePatterns = [
+                /property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+                /content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+                /name=["']twitter:image(?::src)?["'][^>]*content=["']([^"']+)["']/i,
+                /content=["']([^"']+)["'][^>]*name=["']twitter:image(?::src)?["']/i,
+            ]
+            let og_image = null
+            for ( const pattern of ogImagePatterns ) {
+                const m = html.match( pattern )
+                if ( m?.[1]?.startsWith( 'http' ) ) { og_image = m[1]; break }
+            }
+
+            return res.status( 200 ).json( { title, published_at, og_image } )
         } catch {
             return res.status( 200 ).json( { title: null, published_at: null } )
         }

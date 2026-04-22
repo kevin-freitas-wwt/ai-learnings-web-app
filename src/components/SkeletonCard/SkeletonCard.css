@@ -1,0 +1,76 @@
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.45; }
+}
+
+.skeleton-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    padding: 16px;
+}
+
+.skeleton-card__image {
+    border-radius: 6px;
+    height: 150px;
+    margin: -16px -16px 14px;
+    width: calc(100% + 32px);
+}
+
+.skeleton-card__title {
+    border-radius: 4px;
+    height: 14px;
+    margin-bottom: 8px;
+    width: 90%;
+}
+
+.skeleton-card__title--short {
+    width: 60%;
+}
+
+.skeleton-card__bullets {
+    margin: 14px 0 12px;
+}
+
+.skeleton-card__bullet {
+    border-radius: 4px;
+    height: 11px;
+    margin-bottom: 7px;
+    width: 85%;
+}
+
+.skeleton-card__bullet--short {
+    width: 65%;
+}
+
+.skeleton-card__footer {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.skeleton-card__favicon {
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 14px;
+    width: 14px;
+}
+
+.skeleton-card__domain {
+    border-radius: 4px;
+    height: 11px;
+    width: 80px;
+}
+
+/* Apply pulse to all skeleton elements */
+.skeleton-card__image,
+.skeleton-card__title,
+.skeleton-card__bullet,
+.skeleton-card__favicon,
+.skeleton-card__domain {
+    animation: skeleton-pulse 1.4s ease-in-out var(--skeleton-delay, 0s) infinite;
+    background: var(--border);
+}

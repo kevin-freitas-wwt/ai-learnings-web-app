@@ -5,6 +5,7 @@ import { useEntries } from '../../context/useEntries.js'
 import { filterEntries } from '../../utils/filterEntries.js'
 import { sortEntries } from '../../utils/sortEntries.js'
 import EntryCard from '../EntryCard/EntryCard.jsx'
+import SkeletonCard from '../SkeletonCard/SkeletonCard.jsx'
 import './EntryFeed.css'
 
 function EntryFeed() {
@@ -40,7 +41,15 @@ function EntryFeed() {
     const showDivider = newEntries.length > 0 && oldEntries.length > 0
 
     if ( loading ) {
-        return <p className="entry-feed__empty">Loading…</p>
+        return (
+            <div className="entry-feed">
+                {[true, false, true, false, false, true].map( ( img, i ) => (
+                    <div key={i} className="entry-feed__item">
+                        <SkeletonCard showImage={img} delay={i * 0.15} />
+                    </div>
+                ) )}
+            </div>
+        )
     }
 
     if ( sorted.length === 0 ) {
@@ -55,7 +64,7 @@ function EntryFeed() {
         <div className="entry-feed">
             {newEntries.map( ( entry, i ) => (
                 <div key={entry.id} className="entry-feed__item">
-                    <EntryCard entry={entry} focused={focusedIndex === i} />
+                    <EntryCard entry={entry} focused={focusedIndex === i} lastVisit={lastVisit} />
                 </div>
             ) )}
 
@@ -67,7 +76,7 @@ function EntryFeed() {
 
             {oldEntries.map( ( entry, i ) => (
                 <div key={entry.id} className="entry-feed__item">
-                    <EntryCard entry={entry} focused={focusedIndex === newCount + i} />
+                    <EntryCard entry={entry} focused={focusedIndex === newCount + i} lastVisit={lastVisit} />
                 </div>
             ) )}
         </div>

@@ -20,13 +20,13 @@ export default async function handler( req, res ) {
         if ( !sql ) {
             return res.status( 503 ).json( { error: 'Database not configured' } )
         }
-        const { id, url, title, summary, tags, created_at, submitter_name, reading_time, published_at } = req.body
+        const { id, url, title, summary, tags, created_at, submitter_name, reading_time, published_at, og_image } = req.body
         await sql`
             INSERT INTO entries
-                (id, url, title, summary, tags, click_count, heart_count, created_at, submitter_name, reading_time, published_at)
+                (id, url, title, summary, tags, click_count, heart_count, created_at, submitter_name, reading_time, published_at, og_image)
             VALUES
                 (${id}, ${url}, ${title}, ${JSON.stringify( summary )}::jsonb, ${JSON.stringify( tags )}::jsonb,
-                 0, 0, ${created_at}, ${submitter_name ?? null}, ${reading_time ?? null}, ${published_at ?? null})
+                 0, 0, ${created_at}, ${submitter_name ?? null}, ${reading_time ?? null}, ${published_at ?? null}, ${og_image ?? null})
         `
         return res.status( 201 ).json( { ok: true } )
     }

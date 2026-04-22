@@ -5,9 +5,31 @@
     box-shadow: var(--shadow);
     cursor: pointer;
     display: block;
+    overflow: hidden;
     padding: 16px;
+    position: relative;
     text-decoration: none;
     transition: border-color 0.15s, transform 0.15s;
+}
+
+.entry-card__thumbnail {
+    border-radius: 6px;
+    display: block;
+    height: 150px;
+    margin: -16px -16px 14px;
+    object-fit: cover;
+    width: calc(100% + 32px);
+}
+
+.entry-card__unread {
+    background: var(--accent);
+    border-radius: 50%;
+    display: block;
+    height: 7px;
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    width: 7px;
 }
 
 .entry-card:hover,
@@ -61,6 +83,8 @@
     overflow: hidden;
     padding-left: 14px;
     position: relative;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
 }
 
 .entry-card__summary li::before {

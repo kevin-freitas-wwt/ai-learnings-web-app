@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useEntries } from '../../context/useEntries.js'
 import { relativeTime, formatDate } from '../../utils/relativeTime.js'
+import { markRead } from '../../hooks/useReadIds.js'
 import './EntryModal.css'
 
 function EntryModal() {
@@ -14,6 +15,19 @@ function EntryModal() {
     const storedHearts = JSON.parse( localStorage.getItem( 'aih_hearts' ) || '[]' )
     const [hearted, setHearted] = useState( () => storedHearts.includes( id ) )
     const [heartCount, setHeartCount] = useState( entry ? entry.heart_count : 0 )
+
+    const REACTIONS = [
+        { key: 'mindblow', label: '🤯 Mind blown',       countKey: 'mindblow_count' },
+        { key: 'using',    label: '✅ Already using',    countKey: 'using_count' },
+        { key: 'want',     label: '🔜 Want to try',      countKey: 'want_count' },
+    ]
+    const storedReactions = JSON.parse( localStorage.getItem( 'aih_reactions' ) || '{}' )
+    const [reactions, setReactions] = useState( () =>
+        Object.fromEntries( REACTIONS.map( ( r ) => [r.key, {
+            active: !!storedReactions[r.key]?.includes( id ),
+            count: entry?.[r.countKey] ?? 0,
+        }] ) )
+    )
 
     const myName = localStorage.getItem( 'aih_submitter_name' ) || ''
     const isOwner = !!myName && !!entry?.submitter_name && myName === entry.submitter_name
@@ -149,8 +163,27 @@ function EntryModal() {
         } ).then( () => refetch() ).catch( () => {} )
     }, [hearted, id, refetch] )
 
+    function handleReaction( key ) {
+        const current = reactions[key]
+        const delta = current.active ? -1 : 1
+        const stored = JSON.parse( localStorage.getItem( 'aih_reactions' ) || '{}' )
+        const list = stored[key] || []
+        stored[key] = delta === 1 ? [...list, id] : list.filter( ( rid ) => rid !== id )
+        localStorage.setItem( 'aih_reactions', JSON.stringify( stored ) )
+        setReactions( ( prev ) => ( {
+            ...prev,
+            [key]: { active: !current.active, count: current.count + delta },
+        } ) )
+        fetch( `/api/entries/${id}/interact`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify( { action: key, delta } ),
+        } ).catch( () => {} )
+    }
+
     useEffect( () => {
         if ( !entry ) return
+        markRead( id )
         fetch( `/api/entries/${id}/interact`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -210,6 +243,15 @@ function EntryModal() {
                 onClick={( e ) => e.stopPropagation()}
             >
                 <button className="entry-modal__close" onClick={close} aria-label="Close">✕</button>
+
+                {entry.og_image && (
+                    <img
+                        src={entry.og_image}
+                        alt=""
+                        className="entry-modal__hero"
+                        onError={( e ) => { e.currentTarget.style.display = 'none' }}
+                    />
+                )}
 
                 <div className="entry-modal__header">
                     <h2 className="entry-modal__title" id="entry-modal-title">{entry.title}</h2>
@@ -331,6 +373,21 @@ function EntryModal() {
                         ) )}
                     </div>
                 )}
+
+                <div className="entry-modal__reactions">
+                    {REACTIONS.map( ( r ) => (
+                        <button
+                            key={r.key}
+                            className={`entry-modal__reaction${reactions[r.key].active ? ' entry-modal__reaction--active' : ''}`}
+                            onClick={() => handleReaction( r.key )}
+                        >
+                            {r.label}
+                            {reactions[r.key].count > 0 && (
+                                <span className="entry-modal__reaction-count">{reactions[r.key].count}</span>
+                            )}
+                        </button>
+                    ) )}
+                </div>
 
                 <div className="entry-modal__footer">
                     <div className="entry-modal__meta">

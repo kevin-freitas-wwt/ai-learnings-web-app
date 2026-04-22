@@ -26,6 +26,7 @@ function SubmitForm( { back = '/' } ) {
     const [submitterName, setSubmitterName] = useState( () => localStorage.getItem( 'aih_submitter_name' ) || '' )
     const [readingTime, setReadingTime] = useState( '' )
     const [publishedAt, setPublishedAt] = useState( null )
+    const [ogImage, setOgImage] = useState( null )
     const [fetchingTitle, setFetchingTitle] = useState( false )
     const [duplicateEntry, setDuplicateEntry] = useState( null )
     const [nameMatches, setNameMatches] = useState( [] )
@@ -46,6 +47,7 @@ function SubmitForm( { back = '/' } ) {
                     const data = await res.json()
                     if ( data.title ) setTitle( data.title )
                     if ( data.published_at ) setPublishedAt( data.published_at )
+                    if ( data.og_image ) setOgImage( data.og_image )
                 }
             } catch {
                 // gracefully skip — form works without auto-fill
@@ -150,6 +152,7 @@ function SubmitForm( { back = '/' } ) {
             submitter_name: submitterName.trim() || null,
             reading_time: readingTime ? Number( readingTime ) : null,
             published_at: publishedAt ?? null,
+            og_image: ogImage ?? null,
         }
 
         const res = await fetch( '/api/entries', {

@@ -109,3 +109,10 @@ code {
     line-height: 135%;
     padding: 4px 8px;
 }
+
+mark.search-highlight {
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    border-radius: 2px;
+    color: inherit;
+    padding: 0 1px;
+}

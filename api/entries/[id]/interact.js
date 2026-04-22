@@ -25,5 +25,15 @@ export default async function handler( req, res ) {
         return res.status( 200 ).json( { ok: true } )
     }
 
-    return res.status( 400 ).json( { error: 'action must be click or heart' } )
+    const reactionColumns = { mindblow: 'mindblow_count', using: 'using_count', want: 'want_count' }
+    if ( action in reactionColumns ) {
+        if ( delta !== 1 && delta !== -1 ) {
+            return res.status( 400 ).json( { error: 'delta must be 1 or -1' } )
+        }
+        const col = reactionColumns[action]
+        await sql`UPDATE entries SET ${sql( col )} = ${sql( col )} + ${delta} WHERE id = ${id}`
+        return res.status( 200 ).json( { ok: true } )
+    }
+
+    return res.status( 400 ).json( { error: 'unknown action' } )
 }
