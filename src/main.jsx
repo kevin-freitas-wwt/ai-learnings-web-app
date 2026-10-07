@@ -7,6 +7,7 @@ import RootLayout from './components/RootLayout/RootLayout.jsx'
 import EntryModal from './components/EntryModal/EntryModal.jsx'
 import FeedPage from './pages/FeedPage.jsx'
 import SubmitPage from './pages/SubmitPage.jsx'
+import StatsPage from './pages/StatsPage.jsx'
 import PodcastTest from './pages/PodcastTest/PodcastTest.jsx'
 
 const router = createBrowserRouter( [
@@ -30,6 +31,10 @@ const router = createBrowserRouter( [
             {
                 path: 'submit',
                 element: <SubmitPage />,
+            },
+            {
+                path: 'stats',
+                element: <StatsPage />,
             },
             {
                 path: 'podcast-test',
