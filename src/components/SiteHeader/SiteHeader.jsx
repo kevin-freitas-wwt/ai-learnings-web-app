@@ -86,6 +86,9 @@ function SiteHeader() {
                     <button className="site-header__random" onClick={handleRandom} disabled={!!slotState}>
                         ✦ Random
                     </button>
+                    <Link to="/stats" className="site-header__stats">
+                        Stats
+                    </Link>
                     <Link
                         to="/submit"
                         state={{ back: location.search }}
